@@ -2,6 +2,7 @@ import React from 'react';
 import { CHIP_DB, ChipDef } from '../lib/chips';
 
 interface SidebarProps {
+    mode: 'I2C' | 'SPI' | 'AVR' | 'STM32';
     selectedChip: ChipDef;
     onSelectChip: (chip: ChipDef) => void;
     connected: boolean;
@@ -16,6 +17,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
+    mode,
     selectedChip,
     onSelectChip,
     connected,
@@ -28,6 +30,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onVerify,
     onErase
 }) => {
+    // Filter chips based on mode
+    const filteredChips = CHIP_DB.filter(c => {
+        if (mode === 'I2C') return c.type === 'I2C';
+        if (mode === 'SPI') return c.type === 'SPI';
+        if (mode === 'AVR') return c.type === 'AVR';
+        if (mode === 'STM32') return c.type === 'STM32';
+        return false;
+    });
+
     return (
         <div className="lg:col-span-3 space-y-6">
             {/* Chip Selection */}
@@ -44,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         if (chip) onSelectChip(chip)
                     }}
                 >
-                    {CHIP_DB.map(c => (
+                    {filteredChips.map(c => (
                         <option key={c.name} value={c.name} className="bg-slate-900">{c.name}</option>
                     ))}
                 </select>
@@ -69,18 +80,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span className="text-purple-400">02.</span> Operations
                 </h2>
                 <div className="grid grid-cols-2 gap-3">
-                    <OperationButton
-                        label="SCAN I2C"
-                        color="cyan"
-                        onClick={onScanI2C}
-                        disabled={!connected || isBusy}
-                    />
-                    <OperationButton
-                        label="SCAN SPI"
-                        color="cyan"
-                        onClick={onScanSPI}
-                        disabled={!connected || isBusy}
-                    />
+                    {mode === 'I2C' && (
+                        <OperationButton
+                            label="SCAN I2C"
+                            color="cyan"
+                            onClick={onScanI2C}
+                            disabled={!connected || isBusy}
+                        />
+                    )}
+
+                    {mode === 'SPI' && (
+                        <OperationButton
+                            label="SCAN SPI"
+                            color="cyan"
+                            onClick={onScanSPI}
+                            disabled={!connected || isBusy}
+                        />
+                    )}
+
                     <OperationButton
                         label="READ"
                         color="cyan"
@@ -99,12 +116,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onClick={onVerify}
                         disabled={!connected || isBusy}
                     />
-                    <OperationButton
-                        label="ERASE"
-                        color="amber"
-                        onClick={onErase}
-                        disabled={!connected || isBusy}
-                    />
+                    {mode !== 'STM32' && (
+                        <OperationButton
+                            label="ERASE"
+                            color="amber"
+                            onClick={onErase}
+                            disabled={!connected || isBusy}
+                        />
+                    )}
                 </div>
 
                 {/* Progress Bar */}

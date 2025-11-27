@@ -1,5 +1,7 @@
 #include "i2c_driver.h"
+#include "isp_driver.h"
 #include "spi_driver.h"
+#include "swd_driver.h"
 #include "usb_config.h"
 #include <Arduino.h>
 #include <cstring>
@@ -15,11 +17,19 @@ const uint8_t CMD_I2C_WRITE = 0x12;
 const uint8_t CMD_SPI_SCAN = 0x20;
 const uint8_t CMD_SPI_CONFIG = 0x21;
 const uint8_t CMD_SPI_XFER = 0x22;
+const uint8_t CMD_ISP_ENTER = 0x30;
+const uint8_t CMD_ISP_XFER = 0x31;
+const uint8_t CMD_ISP_EXIT = 0x32;
+const uint8_t CMD_SWD_INIT = 0x40;
+const uint8_t CMD_SWD_READ = 0x41;
+const uint8_t CMD_SWD_WRITE = 0x42;
 const uint8_t CMD_ERROR = 0xFF;
 
 // Globals
 I2CDriver i2c;
 SPIDriver spi;
+ISPDriver isp;
+SWDDriver swd;
 // Increased buffer size for better throughput
 uint8_t buffer[4096];
 
@@ -222,6 +232,88 @@ void handle_command(uint8_t cmd, uint16_t len) {
     break;
   }
 
+  case CMD_ISP_ENTER: {
+    if (isp.enterProgrammingMode()) {
+      uint8_t success = 1;
+      send_response(CMD_ISP_ENTER, &success, 1);
+    } else {
+      uint8_t success = 0;
+      send_response(CMD_ISP_ENTER, &success, 1);
+    }
+    break;
+  }
+
+  case CMD_ISP_XFER: {
+    // Req: [Data:4]
+    if (len < 4) {
+      send_error(0x01);
+      return;
+    }
+    uint8_t cmd[4];
+    uint8_t resp[4];
+    memcpy(cmd, buffer, 4);
+
+    isp.transferBlock(cmd, resp);
+
+    send_response(CMD_ISP_XFER, resp, 4);
+    break;
+  }
+
+  case CMD_ISP_EXIT: {
+    isp.endProgrammingMode();
+    send_response(CMD_ISP_EXIT, NULL, 0);
+    break;
+  }
+
+  case CMD_SWD_INIT: {
+    uint32_t idcode = swd.init();
+    if (idcode != 0) {
+      send_response(CMD_SWD_INIT, (uint8_t *)&idcode, 4);
+    } else {
+      send_error(0x04); // NACK/Fail
+    }
+    break;
+  }
+
+  case CMD_SWD_READ: {
+    // Req: [AP/DP:1][Addr:4]
+    if (len < 5) {
+      send_error(0x01);
+      return;
+    }
+    uint8_t ap = buffer[0];
+    uint32_t addr;
+    memcpy(&addr, buffer + 1, 4);
+
+    uint32_t data;
+    if (swd.readAP(ap, addr, &data)) {
+      send_response(CMD_SWD_READ, (uint8_t *)&data, 4);
+    } else {
+      send_error(0x04);
+    }
+    break;
+  }
+
+  case CMD_SWD_WRITE: {
+    // Req: [AP/DP:1][Addr:4][Data:4]
+    if (len < 9) {
+      send_error(0x01);
+      return;
+    }
+    uint8_t ap = buffer[0];
+    uint32_t addr;
+    uint32_t data;
+    memcpy(&addr, buffer + 1, 4);
+    memcpy(&data, buffer + 5, 4);
+
+    if (swd.writeAP(ap, addr, data)) {
+      send_response(CMD_SWD_WRITE, NULL, 0);
+    } else {
+      send_error(0x04);
+    }
+    break;
+  }
+
   default:
     send_error(0x01); // Invalid CMD
     break;
@@ -233,6 +325,8 @@ void setup() {
   Serial.setTimeout(100); // Set timeout to 100ms
   i2c.begin();
   spi.begin();
+  isp.begin();
+  swd.begin();
   pinMode(LED_BUILTIN, OUTPUT);
 }
 

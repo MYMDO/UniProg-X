@@ -14,6 +14,16 @@ export const CMD = {
     SPI_CONFIG: 0x21,
     SPI_XFER: 0x22,
 
+    // AVR ISP
+    ISP_ENTER: 0x30,
+    ISP_XFER: 0x31,
+    ISP_EXIT: 0x32,
+
+    // STM32 SWD
+    SWD_INIT: 0x40,
+    SWD_READ: 0x41,
+    SWD_WRITE: 0x42,
+
     // Error
     ERROR: 0xFF,
 } as const;

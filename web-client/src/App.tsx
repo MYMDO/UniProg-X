@@ -15,6 +15,7 @@ function App() {
     const [memoryData, setMemoryData] = useState<Uint8Array>(new Uint8Array(256).fill(0xFF))
     const [progress, setProgress] = useState(0)
     const [isBusy, setIsBusy] = useState(false)
+    const [mode, setMode] = useState<'I2C' | 'SPI' | 'AVR' | 'STM32'>('I2C')
 
     useEffect(() => {
         const handleData = (e: Event) => {
@@ -26,6 +27,22 @@ function App() {
         window.addEventListener('serial-data', handleData);
         return () => window.removeEventListener('serial-data', handleData);
     }, []);
+
+    // Auto-select appropriate chip when mode changes
+    useEffect(() => {
+        const firstChipForMode = CHIP_DB.find(c => {
+            if (mode === 'I2C') return c.type === 'I2C';
+            if (mode === 'SPI') return c.type === 'SPI';
+            if (mode === 'AVR') return c.type === 'AVR';
+            if (mode === 'STM32') return c.type === 'STM32';
+            return false;
+        });
+
+        if (firstChipForMode && selectedChip.type !== firstChipForMode.type) {
+            setSelectedChip(firstChipForMode);
+            setMemoryData(new Uint8Array(firstChipForMode.size).fill(0xFF));
+        }
+    }, [mode]);
 
     const handleConnect = async () => {
         if (connected) {
@@ -120,6 +137,100 @@ function App() {
 
     const handleRead = async () => {
         if (!connected || isBusy) return
+
+        if (mode === 'AVR') {
+            setIsBusy(true)
+            setProgress(0)
+            setLog(prev => [...prev.slice(-49), `Reading AVR Flash...`])
+            try {
+                // Enter Prog Mode
+                await serialManager.sendCommand(CMD.ISP_ENTER);
+
+                const newData = new Uint8Array(selectedChip.size);
+                // Read Flash Loop
+                // Cmd: 0x20 (Low Byte), 0x28 (High Byte)
+                for (let i = 0; i < selectedChip.size; i++) {
+                    const isHigh = i % 2 !== 0;
+                    const addr = i >> 1;
+                    const op = isHigh ? 0x28 : 0x20;
+
+                    const cmd = new Uint8Array([op, (addr >> 8) & 0xFF, addr & 0xFF, 0x00]);
+                    const resp = await serialManager.sendCommand(CMD.ISP_XFER, cmd);
+                    newData[i] = resp[3]; // Data is in last byte
+
+                    if (i % 256 === 0) {
+                        setProgress(Math.round((i / selectedChip.size) * 100));
+                        await new Promise(r => setTimeout(r, 0));
+                    }
+                }
+
+                await serialManager.sendCommand(CMD.ISP_EXIT);
+                setMemoryData(newData);
+                setLog(prev => [...prev.slice(-49), 'AVR Read Complete']);
+            } catch (err) {
+                console.error(err);
+                setLog(prev => [...prev.slice(-49), `AVR Read Failed: ${err}`]);
+            } finally {
+                setIsBusy(false);
+                setProgress(0);
+            }
+            return;
+        }
+
+        if (mode === 'STM32') {
+            setIsBusy(true)
+            setProgress(0)
+            setLog(prev => [...prev.slice(-49), `Reading STM32 Flash...`])
+            try {
+                // Init SWD
+                await serialManager.sendCommand(CMD.SWD_INIT);
+
+                // Configure MEM-AP (CSW) - Size 32-bit, Auto-increment
+                // AP 0, Addr 0x00 (CSW) -> 0x23000052 (Size 32, Inc Single)
+                // Write AP: [AP:1][Addr:4][Data:4]
+                const csw = new Uint8Array([0, 0x00, 0x00, 0x00, 0x00, 0x52, 0x00, 0x00, 0x23]);
+                await serialManager.sendCommand(CMD.SWD_WRITE, csw);
+
+                const newData = new Uint8Array(selectedChip.size);
+                const baseAddr = 0x08000000; // Flash Base
+
+                for (let i = 0; i < selectedChip.size; i += 4) {
+                    const addr = baseAddr + i;
+
+                    // Write TAR (Transfer Address Register) - AP 0, Addr 0x04
+                    const tar = new Uint8Array([0, 0x04, 0x00, 0x00, 0x00, addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]);
+                    await serialManager.sendCommand(CMD.SWD_WRITE, tar);
+
+                    // Read DRW (Data Read/Write) - AP 0, Addr 0x0C
+                    // Read AP: [AP:1][Addr:4]
+                    const drw = new Uint8Array([0, 0x0C, 0x00, 0x00, 0x00]);
+                    const resp = await serialManager.sendCommand(CMD.SWD_READ, drw);
+
+                    // Response is 4 bytes (Little Endian)
+                    newData[i] = resp[0];
+                    newData[i + 1] = resp[1];
+                    newData[i + 2] = resp[2];
+                    newData[i + 3] = resp[3];
+
+                    if (i % 256 === 0) {
+                        setProgress(Math.round((i / selectedChip.size) * 100));
+                        await new Promise(r => setTimeout(r, 0));
+                    }
+                }
+
+                setMemoryData(newData);
+                setLog(prev => [...prev.slice(-49), 'STM32 Read Complete']);
+            } catch (err) {
+                console.error(err);
+                setLog(prev => [...prev.slice(-49), `STM32 Read Failed: ${err}`]);
+            } finally {
+                setIsBusy(false);
+                setProgress(0);
+            }
+            return;
+        }
+
+        // Existing I2C/SPI Read Logic
         setIsBusy(true)
         setProgress(0)
         setLog(prev => [...prev.slice(-49), `Reading ${selectedChip.name}...`])
@@ -166,6 +277,97 @@ function App() {
 
     const handleWrite = async () => {
         if (!connected || isBusy) return
+
+        if (mode === 'AVR') {
+            setIsBusy(true)
+            setProgress(0)
+            setLog(prev => [...prev.slice(-49), `Writing AVR Flash...`])
+            try {
+                // Enter Prog Mode
+                await serialManager.sendCommand(CMD.ISP_ENTER);
+
+                // Page Write Loop
+                const pageSize = selectedChip.pageSize;
+                for (let i = 0; i < memoryData.length; i += pageSize) {
+                    const pageAddr = i >> 1; // Word address
+
+                    // Load Page Buffer
+                    for (let j = 0; j < pageSize; j += 2) {
+                        const wordAddr = j >> 1;
+                        const byteLow = memoryData[i + j];
+                        const byteHigh = memoryData[i + j + 1] || 0xFF;
+
+                        // Load Low Byte
+                        await serialManager.sendCommand(CMD.ISP_XFER, new Uint8Array([0x40, 0x00, wordAddr & 0xFF, byteLow]));
+                        // Load High Byte
+                        await serialManager.sendCommand(CMD.ISP_XFER, new Uint8Array([0x48, 0x00, wordAddr & 0xFF, byteHigh]));
+                    }
+
+                    // Write Page
+                    await serialManager.sendCommand(CMD.ISP_XFER, new Uint8Array([0x4C, (pageAddr >> 8) & 0xFF, pageAddr & 0xFF, 0x00]));
+                    await new Promise(r => setTimeout(r, 10)); // Wait for write
+
+                    setProgress(Math.round(((i + pageSize) / memoryData.length) * 100));
+                    await new Promise(r => setTimeout(r, 0));
+                }
+
+                await serialManager.sendCommand(CMD.ISP_EXIT);
+                setLog(prev => [...prev.slice(-49), 'AVR Write Complete']);
+            } catch (err) {
+                console.error(err);
+                setLog(prev => [...prev.slice(-49), `AVR Write Failed: ${err}`]);
+            } finally {
+                setIsBusy(false);
+                setProgress(0);
+            }
+            return;
+        }
+
+        if (mode === 'STM32') {
+            setIsBusy(true)
+            setProgress(0)
+            setLog(prev => [...prev.slice(-49), `Writing STM32 RAM (Test)...`])
+            try {
+                // Init SWD
+                await serialManager.sendCommand(CMD.SWD_INIT);
+
+                // Configure MEM-AP (CSW) - Size 32-bit, Auto-increment
+                const csw = new Uint8Array([0, 0x00, 0x00, 0x00, 0x00, 0x52, 0x00, 0x00, 0x23]);
+                await serialManager.sendCommand(CMD.SWD_WRITE, csw);
+
+                const baseAddr = 0x20000000; // RAM Base
+                const testSize = 256; // Write first 256 bytes for test
+
+                for (let i = 0; i < testSize; i += 4) {
+                    const addr = baseAddr + i;
+
+                    // Write TAR
+                    const tar = new Uint8Array([0, 0x04, 0x00, 0x00, 0x00, addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]);
+                    await serialManager.sendCommand(CMD.SWD_WRITE, tar);
+
+                    // Write DRW
+                    const val = memoryData[i] | (memoryData[i + 1] << 8) | (memoryData[i + 2] << 16) | (memoryData[i + 3] << 24);
+                    const drw = new Uint8Array([0, 0x0C, 0x00, 0x00, 0x00, val & 0xFF, (val >> 8) & 0xFF, (val >> 16) & 0xFF, (val >> 24) & 0xFF]);
+                    await serialManager.sendCommand(CMD.SWD_WRITE, drw);
+
+                    if (i % 64 === 0) {
+                        setProgress(Math.round((i / testSize) * 100));
+                        await new Promise(r => setTimeout(r, 0));
+                    }
+                }
+
+                setLog(prev => [...prev.slice(-49), 'STM32 RAM Write Complete (256B)']);
+            } catch (err) {
+                console.error(err);
+                setLog(prev => [...prev.slice(-49), `STM32 Write Failed: ${err}`]);
+            } finally {
+                setIsBusy(false);
+                setProgress(0);
+            }
+            return;
+        }
+
+        // Existing I2C/SPI Write Logic
         setIsBusy(true)
         setProgress(0)
         setLog(prev => [...prev.slice(-49), `Writing ${memoryData.length} bytes to ${selectedChip.name}...`])
@@ -251,6 +453,34 @@ function App() {
 
     const handleErase = async () => {
         if (!connected || isBusy) return
+
+        if (mode === 'AVR') {
+            // AVR Chip Erase
+            setIsBusy(true)
+            setLog(prev => [...prev.slice(-49), `Erasing AVR Chip...`])
+            try {
+                // Send Chip Erase command (0xAC, 0x80, 0x00, 0x00)
+                const cmd = new Uint8Array([0xAC, 0x80, 0x00, 0x00]);
+                await serialManager.sendCommand(CMD.ISP_XFER, cmd);
+                await new Promise(r => setTimeout(r, 50)); // Wait for erase
+                setLog(prev => [...prev.slice(-49), 'AVR Chip Erase Complete'])
+                // Clear memory view
+                setMemoryData(new Uint8Array(selectedChip.size).fill(0xFF))
+            } catch (err) {
+                console.error(err)
+                setLog(prev => [...prev.slice(-49), `AVR Erase Failed: ${err}`])
+            } finally {
+                setIsBusy(false)
+            }
+            return;
+        }
+
+        if (mode === 'STM32') {
+            setLog(prev => [...prev.slice(-49), `STM32 Erase Not Implemented Yet`])
+            return;
+        }
+
+        // I2C/SPI Erase Logic (Existing)
         setIsBusy(true)
         setProgress(0)
         setLog(prev => [...prev.slice(-49), `Erasing ${selectedChip.name} (filling with 0xFF)...`])
@@ -310,8 +540,24 @@ function App() {
             <div className="max-w-[1600px] mx-auto">
                 <Header connected={connected} onConnect={handleConnect} />
 
+                <div className="flex gap-4 mb-6 border-b border-white/10 pb-4">
+                    {(['I2C', 'SPI', 'AVR', 'STM32'] as const).map((m) => (
+                        <button
+                            key={m}
+                            onClick={() => setMode(m)}
+                            className={`px-6 py-2 font-mono font-bold tracking-wider transition-all ${mode === m
+                                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'
+                                    : 'text-slate-500 hover:text-slate-300 border border-transparent'
+                                }`}
+                        >
+                            {m}
+                        </button>
+                    ))}
+                </div>
+
                 <main className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <Sidebar
+                        mode={mode}
                         selectedChip={selectedChip}
                         onSelectChip={setSelectedChip}
                         connected={connected}

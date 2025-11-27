@@ -1,6 +1,6 @@
 export interface ChipDef {
     name: string;
-    type: 'I2C' | 'SPI';
+    type: 'I2C' | 'SPI' | 'AVR' | 'STM32';
     size: number; // in bytes
     pageSize: number; // in bytes
     address?: number; // I2C address
@@ -43,4 +43,13 @@ export const CHIP_DB: ChipDef[] = [
     { name: '25Q32', type: 'SPI', size: 4 * 1024 * 1024, pageSize: 256 },
     { name: '25Q64', type: 'SPI', size: 8 * 1024 * 1024, pageSize: 256 },
     { name: '25Q128', type: 'SPI', size: 16 * 1024 * 1024, pageSize: 256 },
+
+    // AVR Microcontrollers
+    { name: 'ATmega328P', type: 'AVR', size: 32 * 1024, pageSize: 128 },
+    { name: 'ATmega168', type: 'AVR', size: 16 * 1024, pageSize: 128 },
+    { name: 'ATtiny85', type: 'AVR', size: 8 * 1024, pageSize: 64 },
+
+    // STM32 Microcontrollers
+    { name: 'STM32F103C8', type: 'STM32', size: 64 * 1024, pageSize: 1024 },
+    { name: 'STM32F103CB', type: 'STM32', size: 128 * 1024, pageSize: 1024 },
 ];

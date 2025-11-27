@@ -36,6 +36,20 @@ All multi-byte integers are Little Endian.
 | 0x21 | SPI_CONFIG | `[Freq:4][Mode:1]` | None | Configure SPI bus |
 | 0x22 | SPI_XFER | `[CS:1][Len:2][Data:N]` | `[Data:N]` | Transfer N bytes |
 
+### AVR ISP (0x30 - 0x3F)
+| ID | Name | Payload (Req) | Payload (Resp) | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| 0x30 | ISP_ENTER | None | `[Success:1]` | Enter Programming Mode |
+| 0x31 | ISP_XFER | `[Data:4]` | `[Data:4]` | Transfer 4 bytes (standard ISP cmd) |
+| 0x32 | ISP_EXIT | None | None | Exit Programming Mode |
+
+### SWD (0x40 - 0x4F)
+| ID | Name | Payload (Req) | Payload (Resp) | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| 0x40 | SWD_INIT | None | `[IDCODE:4]` | Initialize SWD and read IDCODE |
+| 0x41 | SWD_READ | `[AP/DP:1][Addr:4]` | `[Data:4]` | Read AP/DP Register |
+| 0x42 | SWD_WRITE | `[AP/DP:1][Addr:4][Data:4]` | None | Write AP/DP Register |
+
 ## Error Codes
 If a command fails, the device responds with `CMD_ERROR (0xFF)`:
 `[0xAA][0xFF][0x01][0x00][ErrorCode][CRC]`

@@ -6,11 +6,13 @@ UniProg-X is a professional-grade, hyper-scalable, and automated hardware progra
 
 ## 🚀 Features
 
-*   **Universal Support**: Native support for I2C EEPROMs and SPI Flash chips.
+*   **Universal Support**: Native support for I2C EEPROMs, SPI Flash chips, AVR microcontrollers (ISP), and STM32 microcontrollers (SWD).
 *   **Web-First Interface**: No drivers needed. Works directly in Chrome, Edge, and Opera via the Web Serial API.
 *   **Auto-Detection**: Smart scanning automatically identifies connected chips (I2C & SPI).
+*   **Multi-Protocol**: Supports I2C, SPI, AVR ISP, and STM32 SWD protocols.
 *   **High Performance**: Powered by RP2040's PIO and dual-core architecture for maximum throughput.
 *   **Modern UI**: Cyberpunk-themed, responsive interface with glassmorphism and real-time feedback.
+*   **Mode-Aware Interface**: Separate tabs for I2C, SPI, AVR, and STM32 with context-specific controls.
 *   **Virtualized Hex Editor**: Smoothly handle large binary files with efficient virtualization.
 *   **Comprehensive Toolset**: Read, Write, Verify, Erase, and File Management (.bin, .hex, .eep).
 
@@ -28,6 +30,9 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
 | **SPI CS** | GPIO 17 | Pin 22 | Chip Select |
 | **SPI SCK** | GPIO 18 | Pin 24 | SPI Clock |
 | **SPI TX** | GPIO 19 | Pin 25 | MOSI (Master Out Slave In) |
+| **AVR RESET** | GPIO 20 | Pin 26 | AVR Reset (ISP) |
+| **SWD SWCLK** | GPIO 2 | Pin 4 | SWD Clock (STM32) |
+| **SWD SWDIO** | GPIO 3 | Pin 5 | SWD Data (STM32) |
 | **GND** | GND | Pin 3, 8, etc. | Ground |
 | **3V3** | 3V3(OUT) | Pin 36 | 3.3V Power Supply |
 
@@ -43,6 +48,15 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
 ### SPI Flash (W25QXX)
 *   **Winbond**: W25Q16 (2MB), W25Q32 (4MB), W25Q64 (8MB), W25Q128 (16MB), W25Q256 (32MB)
 *   **Generic**: Compatible with most standard SPI Flash chips supporting JEDEC ID (0x9F).
+
+### AVR Microcontrollers (ISP)
+*   **ATmega**: ATmega328P (32KB), ATmega168 (16KB)
+*   **ATtiny**: ATtiny85 (8KB)
+*   *In-System Programming (ISP) via SPI protocol*
+
+### STM32 Microcontrollers (SWD)
+*   **STM32F1**: STM32F103C8 (64KB), STM32F103CB (128KB)
+*   *Serial Wire Debug (SWD) for flash read and RAM write*
 
 ## 📦 Installation & Build
 
@@ -70,14 +84,21 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
 ## 📖 Usage Guide
 
 1.  **Connect**: Plug in your RP2040 and click **"INITIALIZE LINK"** in the web interface. Select the device from the browser prompt.
-2.  **Scan**:
-    *   Click **"SCAN I2C"** for EEPROMs.
-    *   Click **"SCAN SPI"** for Flash chips.
+2.  **Select Mode**: Choose the appropriate tab:
+    *   **I2C**: For I2C EEPROMs
+    *   **SPI**: For SPI Flash chips
+    *   **AVR**: For AVR microcontrollers (ISP)
+    *   **STM32**: For STM32 microcontrollers (SWD)
+3.  **Scan** (I2C/SPI modes):
+    *   Click **"SCAN I2C"** for EEPROMs (I2C mode).
+    *   Click **"SCAN SPI"** for Flash chips (SPI mode).
     *   *The system will attempt to auto-select the detected chip.*
-3.  **Read**: Click **"READ"** to dump the chip's memory into the Hex Editor.
-4.  **Edit/Load**: Modify data directly in the editor or use **"LOAD FILE"** to import a binary.
-5.  **Write**: Click **"WRITE"** to program the chip.
-6.  **Verify**: Click **"VERIFY"** to ensure data integrity.
+4.  **Select Target**: Choose your chip from the dropdown (auto-selected on mode change).
+5.  **Read**: Click **"READ"** to dump the chip's memory into the Hex Editor.
+6.  **Edit/Load**: Modify data directly in the editor or use **"LOAD FILE"** to import a binary.
+7.  **Write**: Click **"WRITE"** to program the chip.
+8.  **Verify**: Click **"VERIFY"** to ensure data integrity.
+9.  **Erase**: Click **"ERASE"** to clear the chip (not available for STM32).
 
 ## 🤝 Contributing
 
