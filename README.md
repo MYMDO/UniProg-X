@@ -2,7 +2,7 @@
 
 UniProg-X is a professional-grade, hyper-scalable, and automated hardware programmer designed for the modern era. Built on the powerful Raspberry Pi Pico (RP2040) and featuring a sleek, web-based interface, it brings hardware programming into the 21st century.
 
-![UniProg-X Interface](https://via.placeholder.com/800x450?text=UniProg-X+Interface)
+![UniProg-X Interface](UniProg-X_Interface.jpg)
 
 ## 🚀 Features
 
