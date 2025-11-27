@@ -32,8 +32,9 @@ All multi-byte integers are Little Endian.
 ### SPI (0x20 - 0x2F)
 | ID | Name | Payload (Req) | Payload (Resp) | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| 0x20 | SPI_CONFIG | `[Freq:4][Mode:1]` | None | Configure SPI bus |
-| 0x21 | SPI_XFER | `[CS:1][Len:2][Data:N]` | `[Data:N]` | Transfer N bytes |
+| 0x20 | SPI_SCAN | None | `[Count:1][Mfg:1][Dev:2]` | Scan for SPI Flash (JEDEC ID) |
+| 0x21 | SPI_CONFIG | `[Freq:4][Mode:1]` | None | Configure SPI bus |
+| 0x22 | SPI_XFER | `[CS:1][Len:2][Data:N]` | `[Data:N]` | Transfer N bytes |
 
 ## Error Codes
 If a command fails, the device responds with `CMD_ERROR (0xFF)`:
