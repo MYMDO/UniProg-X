@@ -24,6 +24,9 @@ export const CMD = {
     SWD_READ: 0x41,
     SWD_WRITE: 0x42,
 
+    // Bootloader
+    BOOTLOADER: 0x50,
+
     // Error
     ERROR: 0xFF,
 } as const;

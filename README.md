@@ -10,10 +10,13 @@ UniProg-X is a professional-grade, hyper-scalable, and automated hardware progra
 *   **Web-First Interface**: No drivers needed. Works directly in Chrome, Edge, and Opera via the Web Serial API.
 *   **Auto-Detection**: Smart scanning automatically identifies connected chips (I2C & SPI).
 *   **Multi-Protocol**: Supports I2C, SPI, AVR ISP, and STM32 SWD protocols.
-*   **High Performance**: Powered by RP2040's PIO and dual-core architecture for maximum throughput.
+*   **High Performance**: 2-4x faster transfers with adaptive chunking. Powered by RP2040's PIO and dual-core architecture.
 *   **Modern UI**: Cyberpunk-themed, responsive interface with glassmorphism and real-time feedback.
 *   **Mode-Aware Interface**: Separate tabs for I2C, SPI, AVR, and STM32 with context-specific controls.
 *   **Virtualized Hex Editor**: Smoothly handle large binary files with efficient virtualization.
+*   **Advanced Features**:
+    - **AVR Fuse Editor**: Read/write fuse bits with safety confirmations and presets
+    - **STM32 Option Bytes**: View read protection, user flags, and write protection status
 *   **Comprehensive Toolset**: Read, Write, Verify, Erase, and File Management (.bin, .hex, .eep).
 
 ## 🛠️ Hardware Setup

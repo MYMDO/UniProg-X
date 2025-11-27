@@ -23,6 +23,7 @@ const uint8_t CMD_ISP_EXIT = 0x32;
 const uint8_t CMD_SWD_INIT = 0x40;
 const uint8_t CMD_SWD_READ = 0x41;
 const uint8_t CMD_SWD_WRITE = 0x42;
+const uint8_t CMD_BOOTLOADER = 0x50;
 const uint8_t CMD_ERROR = 0xFF;
 
 // Globals
@@ -314,9 +315,19 @@ void handle_command(uint8_t cmd, uint16_t len) {
     break;
   }
 
-  default:
-    send_error(0x01); // Invalid CMD
+  case CMD_BOOTLOADER: {
+    // Enter RP2040 bootloader mode (BOOTSEL)
+    // This resets the RP2040 into USB mass storage bootloader
+    send_response(CMD_BOOTLOADER, NULL, 0);
+    delay(100); // Give time for response to send
+    rp2040.rebootToBootloader();
     break;
+  }
+
+  default: {
+    send_error(0x01); // Invalid command
+    break;
+  }
   }
 }
 
