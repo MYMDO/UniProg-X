@@ -6,6 +6,7 @@ import { HexEditor } from './components/HexEditor'
 import { Header } from './components/Header'
 import { Sidebar } from './components/Sidebar'
 import { Log } from './components/Log'
+import { AVRFuseEditor } from './components/AVRFuseEditor'
 import { ChipDef, CHIP_DB } from './lib/chips'
 
 function App() {
@@ -546,8 +547,8 @@ function App() {
                             key={m}
                             onClick={() => setMode(m)}
                             className={`px-6 py-2 font-mono font-bold tracking-wider transition-all ${mode === m
-                                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'
-                                    : 'text-slate-500 hover:text-slate-300 border border-transparent'
+                                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'
+                                : 'text-slate-500 hover:text-slate-300 border border-transparent'
                                 }`}
                         >
                             {m}
@@ -608,6 +609,19 @@ function App() {
                                 <HexEditor data={memoryData} />
                             </div>
                         </div>
+
+                        {/* AVR Fuse Bit Editor */}
+                        {mode === 'AVR' && (
+                            <div className="lg:col-span-12 mt-6">
+                                <AVRFuseEditor
+                                    connected={connected}
+                                    isBusy={isBusy}
+                                    onBusyChange={setIsBusy}
+                                    onLog={(msg) => setLog(prev => [...prev.slice(-49), msg])}
+                                />
+                            </div>
+                        )}
+
                         <div className="lg:hidden">
                             <Log logs={log} />
                         </div>
