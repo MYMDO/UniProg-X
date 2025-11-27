@@ -1,0 +1,1 @@
+src/App.tsx(107,91): error TS18048: 'detectedChip' is possibly 'undefined'.
