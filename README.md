@@ -7,10 +7,11 @@ UniProg-X is a professional-grade, hyper-scalable, and automated hardware progra
 ## 🚀 Features
 
 *   **Universal Support**: Native support for I2C EEPROMs, SPI Flash chips, AVR microcontrollers (ISP), and STM32 microcontrollers (SWD).
+*   **OPUP Protocol**: Modern binary protocol with CRC32, sequence numbers, and robust error handling.
 *   **Web-First Interface**: No drivers needed. Works directly in Chrome, Edge, and Opera via the Web Serial API.
 *   **Auto-Detection**: Smart scanning automatically identifies connected chips (I2C & SPI).
 *   **Multi-Protocol**: Supports I2C, SPI, AVR ISP, and STM32 SWD protocols.
-*   **High Performance**: 2-4x faster transfers with adaptive chunking. Powered by RP2040's PIO and dual-core architecture.
+*   **High Performance**: Optimized transfers with adaptive chunking. Powered by RP2040's dual-core architecture.
 *   **Modern UI**: Cyberpunk-themed, responsive interface with glassmorphism and real-time feedback.
 *   **Mode-Aware Interface**: Separate tabs for I2C, SPI, AVR, and STM32 with context-specific controls.
 *   **Virtualized Hex Editor**: Smoothly handle large binary files with efficient virtualization.
@@ -78,11 +79,15 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
     ```bash
     npm install
     ```
-4.  Start the development server:
+4.  Build for production:
+    ```bash
+    npm run build
+    ```
+5.  Start development server (optional):
     ```bash
     npm run dev
     ```
-5.  Open `http://localhost:5173` in a compatible browser.
+6.  Open `http://localhost:5173` in a compatible browser (Chrome, Edge, Opera).
 
 ## 📖 Usage Guide
 
@@ -103,10 +108,73 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
 8.  **Verify**: Click **"VERIFY"** to ensure data integrity.
 9.  **Erase**: Click **"ERASE"** to clear the chip (not available for STM32).
 
+## 🔧 Architecture
+
+### Communication Protocol
+UniProg-X uses **OPUP** (OpenProg Universal Protocol), a modern binary protocol with:
+- **CRC32 checksums** for data integrity
+- **Sequence numbers** for request/response matching
+- **Error flags** for robust error handling
+- **Modular driver architecture** for extensibility
+
+See [protocol.md](protocol.md) for detailed specifications.
+
+### Firmware Structure
+```
+firmware/src/
+├── protocol/
+│   ├── OPUP.h              # Protocol definitions
+│   ├── OPUPDriver.h        # Base driver interface
+│   └── drivers/
+│       ├── OPUP_I2C.h      # I2C EEPROM driver
+│       ├── OPUP_SPI.h      # SPI Flash driver
+│       ├── OPUP_ISP.h      # AVR ISP driver
+│       ├── OPUP_SWD.h      # STM32 SWD driver
+│       └── OPUP_System.h   # System commands
+├── i2c_driver.cpp          # I2C hardware abstraction
+├── spi_driver.cpp          # SPI hardware abstraction
+├── isp_driver.cpp          # AVR ISP implementation
+└── swd_driver.cpp          # STM32 SWD implementation
+```
+
+### Web Client Structure
+```
+web-client/src/
+├── lib/
+│   ├── opup/
+│   │   ├── opup.ts         # OPUP client implementation
+│   │   └── web-transport.ts # Web Serial transport layer
+│   └── chips.ts            # Chip database
+├── components/
+│   ├── HexEditor.tsx       # Virtualized hex editor
+│   ├── AVRFuseEditor.tsx   # AVR fuse bit editor
+│   └── ...
+└── App.tsx                 # Main application
+```
+
 ## 🤝 Contributing
 
-Contributions are welcome! Please read `protocol.md` to understand the communication standard before submitting PRs.
+Contributions are welcome! Please:
+1. Read [protocol.md](protocol.md) to understand the OPUP communication standard
+2. Follow the existing code style and architecture
+3. Test thoroughly before submitting PRs
+4. Document any new features or protocol changes
+
+## 🐛 Known Issues
+
+- SPI scan implementation is incomplete (returns placeholder data)
+- Multiple OPUPClient instances may be created in React Strict Mode (fixed in latest version)
+- I2C scan fixed to return proper OPUP response format
 
 ## 📄 License
 
 MIT License - Copyright (c) 2025 UniProg-X Team
+
+## 🙏 Acknowledgments
+
+Built with:
+- **RP2040** - Raspberry Pi Pico microcontroller
+- **PlatformIO** - Embedded development platform
+- **React + TypeScript** - Modern web framework
+- **Vite** - Fast build tool
+- **Web Serial API** - Browser-based serial communication

@@ -1,0 +1,5 @@
+
+> uniprog-x-client@0.0.0 build
+> tsc && vite build
+
+src/App.tsx(54,11): error TS1128: Declaration or statement expected.

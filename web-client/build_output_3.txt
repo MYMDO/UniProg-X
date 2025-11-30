@@ -1,0 +1,13 @@
+
+> uniprog-x-client@0.0.0 build
+> tsc && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 41 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.46 kB │ gzip:  0.29 kB
+dist/assets/index-CZDlCol4.css   20.70 kB │ gzip:  4.61 kB
+dist/assets/index-Bj4MPQ4k.js   183.55 kB │ gzip: 57.89 kB
+✓ built in 1.55s

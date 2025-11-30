@@ -66,6 +66,10 @@ export class SerialManager {
         const { value, done } = await this.reader.read();
         if (done) break;
         if (value) {
+          // Emit raw data for OPUP
+          window.dispatchEvent(new CustomEvent('raw-serial-data', { detail: value }));
+
+          // Legacy processing (optional, can be removed if fully switching)
           this.processData(value);
         }
       }

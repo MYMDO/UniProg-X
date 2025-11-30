@@ -1,5 +1,5 @@
-
-import { useState, useEffect } from 'react'
+```
+import { useState, useEffect, useRef } from 'react'
 import { OPUPClient, OpupCmd } from './lib/opup'
 import { WebSerialTransport } from './lib/opup/web-transport'
 import { HexEditor } from './components/HexEditor'
@@ -18,20 +18,23 @@ function App() {
     const [isBusy, setIsBusy] = useState(false)
     const [mode, setMode] = useState<'I2C' | 'SPI' | 'AVR' | 'STM32'>('I2C')
 
-    // OPUP Client - using useState with lazy initializer to ensure single instance
-    const [opupClient] = useState(() => {
-        const transport = new WebSerialTransport();
-        return new OPUPClient(transport);
-    });
+    // OPUP Client Instance - lazy initialization
+    const transportRef = useRef<WebSerialTransport>();
+    const clientRef = useRef<OPUPClient>();
+
+    if (!transportRef.current) transportRef.current = new WebSerialTransport();
+    if (!clientRef.current) clientRef.current = new OPUPClient(transportRef.current);
 
     useEffect(() => {
-        // Cleanup on unmount
-        return () => {
-            if (opupClient.isConnected()) {
-                opupClient.disconnect();
-            }
+        const handleData = (e: Event) => {
+            const customEvent = e as CustomEvent;
+            const { cmd, payload } = customEvent.detail;
+            const payloadHex = Array.from(payload).map((b: any) => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+            setLog(prev => [...prev.slice(-49), `RX: CMD = ${ cmd.toString(16).toUpperCase() } LEN = ${ payload.length } DATA = ${ payloadHex } `]);
         };
-    }, [opupClient]);
+        window.addEventListener('serial-data', handleData);
+        return () => window.removeEventListener('serial-data', handleData);
+    }, []);
 
     // Auto-select appropriate chip when mode changes
     useEffect(() => {
@@ -51,17 +54,14 @@ function App() {
 
     const handleConnect = async () => {
         if (connected) {
-            await opupClient.disconnect()
+            await serialManager.disconnect()
             setConnected(false)
             setLog(prev => [...prev.slice(-49), 'System Disconnected'])
         } else {
-            try {
-                await opupClient.connect()
+            const success = await serialManager.connect()
+            if (success) {
                 setConnected(true)
                 setLog(prev => [...prev.slice(-49), 'System Connected'])
-            } catch (err) {
-                console.error(err)
-                setLog(prev => [...prev.slice(-49), `Connection Failed: ${err}`])
             }
         }
     }
@@ -72,33 +72,27 @@ function App() {
         setLog(prev => [...prev.slice(-49), 'Scanning I2C Bus...'])
 
         try {
-            const response = await opupClient.sendCommand(OpupCmd.I2C_SCAN);
-            console.log('I2C_SCAN response:', response, 'payload:', response.payload);
-
-            const count = response.payload ? response.payload[0] : undefined;
-            console.log('I2C device count:', count);
-
-            if (count === undefined || count === null) {
-                setLog(prev => [...prev.slice(-49), 'I2C Scan: Invalid response (no count)']);
-            } else if (count === 0) {
+            const response = await serialManager.sendCommand(CMD.I2C_SCAN);
+            const count = response[0];
+            if (count === 0) {
                 setLog(prev => [...prev.slice(-49), 'I2C Scan: No devices found']);
             } else {
-                const addresses = Array.from(response.payload.slice(1, 1 + count));
+                const addresses = Array.from(response.slice(1, 1 + count));
                 const addressStrings = addresses.map(a => '0x' + a.toString(16).toUpperCase().padStart(2, '0'));
-                setLog(prev => [...prev.slice(-49), `I2C Scan: Found ${count} devices: ${addressStrings.join(', ')}`]);
+                setLog(prev => [...prev.slice(-49), `I2C Scan: Found ${ count } devices: ${ addressStrings.join(', ') } `]);
 
                 // Auto-select chip if a known I2C EEPROM is detected
                 if (addresses.includes(0x50) || addresses.includes(0x51) || addresses.includes(0x52)) {
                     const detectedChip = CHIP_DB.find(c => c.name === '24C02');
                     if (detectedChip && selectedChip.name !== detectedChip.name) {
                         setSelectedChip(detectedChip);
-                        setLog(prev => [...prev.slice(-49), `Auto-selected: ${detectedChip.name} (0x50)`]);
+                        setLog(prev => [...prev.slice(-49), `Auto - selected: ${ detectedChip.name } (0x50)`]);
                     }
                 }
             }
         } catch (err) {
             console.error(err)
-            setLog(prev => [...prev.slice(-49), `I2C Scan Failed: ${err}`])
+            setLog(prev => [...prev.slice(-49), `I2C Scan Failed: ${ err } `])
         } finally {
             setIsBusy(false)
         }
@@ -110,14 +104,14 @@ function App() {
         setLog(prev => [...prev.slice(-49), 'Scanning SPI Bus...'])
 
         try {
-            const response = await opupClient.sendCommand(OpupCmd.SPI_SCAN);
-            const count = response.payload[0];
+            const response = await serialManager.sendCommand(CMD.SPI_SCAN);
+            const count = response[0];
             if (count === 0) {
                 setLog(prev => [...prev.slice(-49), 'SPI Scan: No flash chip detected']);
             } else {
-                const mfgID = response.payload[1];
-                const devID = (response.payload[2] << 8) | response.payload[3];
-                setLog(prev => [...prev.slice(-49), `SPI Scan: Found chip - Mfg:0x${mfgID.toString(16).padStart(2, '0')} Dev:0x${devID.toString(16).padStart(4, '0')}`]);
+                const mfgID = response[1];
+                const devID = (response[2] << 8) | response[3];
+                setLog(prev => [...prev.slice(-49), `SPI Scan: Found chip - Mfg: 0x${ mfgID.toString(16).padStart(2, '0') } Dev: 0x${ devID.toString(16).padStart(4, '0') } `]);
 
                 // Auto-detect Winbond W25QXX chips (Manufacturer ID: 0xEF)
                 if (mfgID === 0xEF) {
@@ -134,7 +128,7 @@ function App() {
                             if (detectedChip) {
                                 if (selectedChip.name !== detectedChip.name) {
                                     setSelectedChip(detectedChip);
-                                    setLog(prev => [...prev.slice(-49), `Auto-selected: ${detectedChip.name} (Winbond)`]);
+                                    setLog(prev => [...prev.slice(-49), `Auto - selected: ${ detectedChip.name } (Winbond)`]);
                                 }
                             }
                         }
@@ -143,7 +137,7 @@ function App() {
             }
         } catch (err) {
             console.error(err)
-            setLog(prev => [...prev.slice(-49), `SPI Scan Failed: ${err}`])
+            setLog(prev => [...prev.slice(-49), `SPI Scan Failed: ${ err } `])
         } finally {
             setIsBusy(false)
         }
@@ -158,7 +152,7 @@ function App() {
             setLog(prev => [...prev.slice(-49), `Reading AVR Flash...`])
             try {
                 // Enter Prog Mode
-                await opupClient.sendCommand(OpupCmd.ISP_ENTER);
+                await serialManager.sendCommand(CMD.ISP_ENTER);
 
                 const newData = new Uint8Array(selectedChip.size);
                 // Read Flash Loop
@@ -169,8 +163,8 @@ function App() {
                     const op = isHigh ? 0x28 : 0x20;
 
                     const cmd = new Uint8Array([op, (addr >> 8) & 0xFF, addr & 0xFF, 0x00]);
-                    const resp = await opupClient.sendCommand(OpupCmd.ISP_XFER, cmd);
-                    newData[i] = resp.payload[3]; // Data is in last byte
+                    const resp = await serialManager.sendCommand(CMD.ISP_XFER, cmd);
+                    newData[i] = resp[3]; // Data is in last byte
 
                     if (i % 256 === 0) {
                         setProgress(Math.round((i / selectedChip.size) * 100));
@@ -178,12 +172,12 @@ function App() {
                     }
                 }
 
-                await opupClient.sendCommand(OpupCmd.ISP_EXIT);
+                await serialManager.sendCommand(CMD.ISP_EXIT);
                 setMemoryData(newData);
                 setLog(prev => [...prev.slice(-49), 'AVR Read Complete']);
             } catch (err) {
                 console.error(err);
-                setLog(prev => [...prev.slice(-49), `AVR Read Failed: ${err}`]);
+                setLog(prev => [...prev.slice(-49), `AVR Read Failed: ${ err } `]);
             } finally {
                 setIsBusy(false);
                 setProgress(0);
@@ -197,13 +191,13 @@ function App() {
             setLog(prev => [...prev.slice(-49), `Reading STM32 Flash...`])
             try {
                 // Init SWD
-                await opupClient.sendCommand(OpupCmd.SWD_INIT);
+                await serialManager.sendCommand(CMD.SWD_INIT);
 
                 // Configure MEM-AP (CSW) - Size 32-bit, Auto-increment
                 // AP 0, Addr 0x00 (CSW) -> 0x23000052 (Size 32, Inc Single)
                 // Write AP: [AP:1][Addr:4][Data:4]
                 const csw = new Uint8Array([0, 0x00, 0x00, 0x00, 0x00, 0x52, 0x00, 0x00, 0x23]);
-                await opupClient.sendCommand(OpupCmd.SWD_WRITE, csw);
+                await serialManager.sendCommand(CMD.SWD_WRITE, csw);
 
                 const newData = new Uint8Array(selectedChip.size);
                 const baseAddr = 0x08000000; // Flash Base
@@ -213,18 +207,18 @@ function App() {
 
                     // Write TAR (Transfer Address Register) - AP 0, Addr 0x04
                     const tar = new Uint8Array([0, 0x04, 0x00, 0x00, 0x00, addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]);
-                    await opupClient.sendCommand(OpupCmd.SWD_WRITE, tar);
+                    await serialManager.sendCommand(CMD.SWD_WRITE, tar);
 
                     // Read DRW (Data Read/Write) - AP 0, Addr 0x0C
                     // Read AP: [AP:1][Addr:4]
                     const drw = new Uint8Array([0, 0x0C, 0x00, 0x00, 0x00]);
-                    const resp = await opupClient.sendCommand(OpupCmd.SWD_READ, drw);
+                    const resp = await serialManager.sendCommand(CMD.SWD_READ, drw);
 
                     // Response is 4 bytes (Little Endian)
-                    newData[i] = resp.payload[0];
-                    newData[i + 1] = resp.payload[1];
-                    newData[i + 2] = resp.payload[2];
-                    newData[i + 3] = resp.payload[3];
+                    newData[i] = resp[0];
+                    newData[i + 1] = resp[1];
+                    newData[i + 2] = resp[2];
+                    newData[i + 3] = resp[3];
 
                     if (i % 256 === 0) {
                         setProgress(Math.round((i / selectedChip.size) * 100));
@@ -236,7 +230,7 @@ function App() {
                 setLog(prev => [...prev.slice(-49), 'STM32 Read Complete']);
             } catch (err) {
                 console.error(err);
-                setLog(prev => [...prev.slice(-49), `STM32 Read Failed: ${err}`]);
+                setLog(prev => [...prev.slice(-49), `STM32 Read Failed: ${ err } `]);
             } finally {
                 setIsBusy(false);
                 setProgress(0);
@@ -247,7 +241,7 @@ function App() {
         // Existing I2C/SPI Read Logic
         setIsBusy(true)
         setProgress(0)
-        setLog(prev => [...prev.slice(-49), `Reading ${selectedChip.name}...`])
+        setLog(prev => [...prev.slice(-49), `Reading ${ selectedChip.name }...`])
 
         try {
             const newData = new Uint8Array(selectedChip.size)
@@ -264,10 +258,10 @@ function App() {
                 payload[1] = len & 0xFF;
                 payload[2] = (len >> 8) & 0xFF;
 
-                const response = await opupClient.sendCommand(OpupCmd.I2C_READ, payload);
+                const response = await serialManager.sendCommand(CMD.I2C_READ, payload);
 
-                if (response.payload.length === len) {
-                    newData.set(response.payload, i);
+                if (response.length === len) {
+                    newData.set(response, i);
                 } else {
                     throw new Error("Invalid response length");
                 }
@@ -298,7 +292,7 @@ function App() {
             setLog(prev => [...prev.slice(-49), `Writing AVR Flash...`])
             try {
                 // Enter Prog Mode
-                await opupClient.sendCommand(OpupCmd.ISP_ENTER);
+                await serialManager.sendCommand(CMD.ISP_ENTER);
 
                 // Page Write Loop
                 const pageSize = selectedChip.pageSize;
@@ -312,24 +306,24 @@ function App() {
                         const byteHigh = memoryData[i + j + 1] || 0xFF;
 
                         // Load Low Byte
-                        await opupClient.sendCommand(OpupCmd.ISP_XFER, new Uint8Array([0x40, 0x00, wordAddr & 0xFF, byteLow]));
+                        await serialManager.sendCommand(CMD.ISP_XFER, new Uint8Array([0x40, 0x00, wordAddr & 0xFF, byteLow]));
                         // Load High Byte
-                        await opupClient.sendCommand(OpupCmd.ISP_XFER, new Uint8Array([0x48, 0x00, wordAddr & 0xFF, byteHigh]));
+                        await serialManager.sendCommand(CMD.ISP_XFER, new Uint8Array([0x48, 0x00, wordAddr & 0xFF, byteHigh]));
                     }
 
                     // Write Page
-                    await opupClient.sendCommand(OpupCmd.ISP_XFER, new Uint8Array([0x4C, (pageAddr >> 8) & 0xFF, pageAddr & 0xFF, 0x00]));
+                    await serialManager.sendCommand(CMD.ISP_XFER, new Uint8Array([0x4C, (pageAddr >> 8) & 0xFF, pageAddr & 0xFF, 0x00]));
                     await new Promise(r => setTimeout(r, 10)); // Wait for write
 
                     setProgress(Math.round(((i + pageSize) / memoryData.length) * 100));
                     await new Promise(r => setTimeout(r, 0));
                 }
 
-                await opupClient.sendCommand(OpupCmd.ISP_EXIT);
+                await serialManager.sendCommand(CMD.ISP_EXIT);
                 setLog(prev => [...prev.slice(-49), 'AVR Write Complete']);
             } catch (err) {
                 console.error(err);
-                setLog(prev => [...prev.slice(-49), `AVR Write Failed: ${err}`]);
+                setLog(prev => [...prev.slice(-49), `AVR Write Failed: ${ err } `]);
             } finally {
                 setIsBusy(false);
                 setProgress(0);
@@ -340,14 +334,14 @@ function App() {
         if (mode === 'STM32') {
             setIsBusy(true)
             setProgress(0)
-            setLog(prev => [...prev.slice(-49), `Writing STM32 RAM (Test)...`])
+            setLog(prev => [...prev.slice(-49), `Writing STM32 RAM(Test)...`])
             try {
                 // Init SWD
-                await opupClient.sendCommand(OpupCmd.SWD_INIT);
+                await serialManager.sendCommand(CMD.SWD_INIT);
 
                 // Configure MEM-AP (CSW) - Size 32-bit, Auto-increment
                 const csw = new Uint8Array([0, 0x00, 0x00, 0x00, 0x00, 0x52, 0x00, 0x00, 0x23]);
-                await opupClient.sendCommand(OpupCmd.SWD_WRITE, csw);
+                await serialManager.sendCommand(CMD.SWD_WRITE, csw);
 
                 const baseAddr = 0x20000000; // RAM Base
                 const testSize = 256; // Write first 256 bytes for test
@@ -357,12 +351,12 @@ function App() {
 
                     // Write TAR
                     const tar = new Uint8Array([0, 0x04, 0x00, 0x00, 0x00, addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]);
-                    await opupClient.sendCommand(OpupCmd.SWD_WRITE, tar);
+                    await serialManager.sendCommand(CMD.SWD_WRITE, tar);
 
                     // Write DRW
                     const val = memoryData[i] | (memoryData[i + 1] << 8) | (memoryData[i + 2] << 16) | (memoryData[i + 3] << 24);
                     const drw = new Uint8Array([0, 0x0C, 0x00, 0x00, 0x00, val & 0xFF, (val >> 8) & 0xFF, (val >> 16) & 0xFF, (val >> 24) & 0xFF]);
-                    await opupClient.sendCommand(OpupCmd.SWD_WRITE, drw);
+                    await serialManager.sendCommand(CMD.SWD_WRITE, drw);
 
                     if (i % 64 === 0) {
                         setProgress(Math.round((i / testSize) * 100));
@@ -373,7 +367,7 @@ function App() {
                 setLog(prev => [...prev.slice(-49), 'STM32 RAM Write Complete (256B)']);
             } catch (err) {
                 console.error(err);
-                setLog(prev => [...prev.slice(-49), `STM32 Write Failed: ${err}`]);
+                setLog(prev => [...prev.slice(-49), `STM32 Write Failed: ${ err } `]);
             } finally {
                 setIsBusy(false);
                 setProgress(0);
@@ -384,7 +378,7 @@ function App() {
         // Existing I2C/SPI Write Logic
         setIsBusy(true)
         setProgress(0)
-        setLog(prev => [...prev.slice(-49), `Writing ${memoryData.length} bytes to ${selectedChip.name}...`])
+        setLog(prev => [...prev.slice(-49), `Writing ${ memoryData.length } bytes to ${ selectedChip.name }...`])
 
         try {
             const chunkSize = selectedChip.pageSize || 16; // Use chip's page size
@@ -397,7 +391,7 @@ function App() {
                 payload[0] = selectedChip.address || 0x50;
                 payload.set(memoryData.slice(i, i + len), 1);
 
-                await opupClient.sendCommand(OpupCmd.I2C_WRITE, payload);
+                await serialManager.sendCommand(CMD.I2C_WRITE, payload);
 
                 // Wait for EEPROM write cycle (typically 5-10ms)
                 await new Promise(r => setTimeout(r, 10));
@@ -411,7 +405,7 @@ function App() {
             setLog(prev => [...prev.slice(-49), 'Write Complete'])
         } catch (err) {
             console.error(err)
-            setLog(prev => [...prev.slice(-49), `Write Failed: ${err}`])
+            setLog(prev => [...prev.slice(-49), `Write Failed: ${ err } `])
         } finally {
             setIsBusy(false)
             setProgress(0)
@@ -422,7 +416,7 @@ function App() {
         if (!connected || isBusy) return
         setIsBusy(true)
         setProgress(0)
-        setLog(prev => [...prev.slice(-49), `Verifying ${selectedChip.name}...`])
+        setLog(prev => [...prev.slice(-49), `Verifying ${ selectedChip.name }...`])
 
         try {
             const chunkSize = 64;
@@ -436,15 +430,13 @@ function App() {
                 payload[1] = len & 0xFF;
                 payload[2] = (len >> 8) & 0xFF;
 
-                const response = await opupClient.sendCommand(OpupCmd.I2C_READ, payload);
+                const response = await serialManager.sendCommand(CMD.I2C_READ, payload);
 
                 // Compare with current memory
                 for (let j = 0; j < len; j++) {
-                    const expected = memoryData[i + j];
-                    const got = response.payload[j];
-                    if (expected !== got) {
+                    if (response[j] !== memoryData[i + j]) {
                         errors++;
-                        setLog(prev => [...prev.slice(-49), `Mismatch at 0x${(i + j).toString(16)}: expected 0x${expected.toString(16).padStart(2, '0')}, got 0x${got.toString(16).padStart(2, '0')}`]);
+                        setLog(prev => [...prev.slice(-49), `Mismatch at 0x${ (i + j).toString(16) }: expected 0x${ memoryData[i + j].toString(16).padStart(2, '0') }, got 0x${ response[j].toString(16).padStart(2, '0') } `]);
                     }
                 }
 
@@ -456,11 +448,11 @@ function App() {
             if (errors === 0) {
                 setLog(prev => [...prev.slice(-49), 'Verify Complete: All bytes match ✓'])
             } else {
-                setLog(prev => [...prev.slice(-49), `Verify Failed: ${errors} mismatches found`])
+                setLog(prev => [...prev.slice(-49), `Verify Failed: ${ errors } mismatches found`])
             }
         } catch (err) {
             console.error(err)
-            setLog(prev => [...prev.slice(-49), `Verify Failed: ${err}`])
+            setLog(prev => [...prev.slice(-49), `Verify Failed: ${ err } `])
         } finally {
             setIsBusy(false)
             setProgress(0)
@@ -477,14 +469,14 @@ function App() {
             try {
                 // Send Chip Erase command (0xAC, 0x80, 0x00, 0x00)
                 const cmd = new Uint8Array([0xAC, 0x80, 0x00, 0x00]);
-                await opupClient.sendCommand(OpupCmd.ISP_XFER, cmd);
+                await serialManager.sendCommand(CMD.ISP_XFER, cmd);
                 await new Promise(r => setTimeout(r, 50)); // Wait for erase
                 setLog(prev => [...prev.slice(-49), 'AVR Chip Erase Complete'])
                 // Clear memory view
                 setMemoryData(new Uint8Array(selectedChip.size).fill(0xFF))
             } catch (err) {
                 console.error(err)
-                setLog(prev => [...prev.slice(-49), `AVR Erase Failed: ${err}`])
+                setLog(prev => [...prev.slice(-49), `AVR Erase Failed: ${ err } `])
             } finally {
                 setIsBusy(false)
             }
@@ -499,7 +491,7 @@ function App() {
         // I2C/SPI Erase Logic (Existing)
         setIsBusy(true)
         setProgress(0)
-        setLog(prev => [...prev.slice(-49), `Erasing ${selectedChip.name} (filling with 0xFF)...`])
+        setLog(prev => [...prev.slice(-49), `Erasing ${ selectedChip.name } (filling with 0xFF)...`])
 
         try {
             const chunkSize = selectedChip.pageSize || 16;
@@ -512,7 +504,7 @@ function App() {
                 payload[0] = selectedChip.address || 0x50;
                 payload.set(eraseData.slice(0, len), 1);
 
-                await opupClient.sendCommand(OpupCmd.I2C_WRITE, payload);
+                await serialManager.sendCommand(CMD.I2C_WRITE, payload);
                 await new Promise(r => setTimeout(r, 10));
 
                 setProgress(Math.round(((i + chunkSize) / selectedChip.size) * 100))
@@ -525,7 +517,7 @@ function App() {
             setLog(prev => [...prev.slice(-49), 'Erase Complete'])
         } catch (err) {
             console.error(err)
-            setLog(prev => [...prev.slice(-49), `Erase Failed: ${err}`])
+            setLog(prev => [...prev.slice(-49), `Erase Failed: ${ err } `])
         } finally {
             setIsBusy(false)
             setProgress(0)
@@ -546,7 +538,7 @@ function App() {
             chipData.set(data.slice(0, selectedChip.size))
 
             setMemoryData(chipData)
-            setLog(prev => [...prev.slice(-49), `Loaded ${data.length} bytes from ${file.name}`])
+            setLog(prev => [...prev.slice(-49), `Loaded ${ data.length } bytes from ${ file.name } `])
         }
         reader.readAsArrayBuffer(file)
     }
@@ -561,10 +553,11 @@ function App() {
                         <button
                             key={m}
                             onClick={() => setMode(m)}
-                            className={`px-6 py-2 font-mono font-bold tracking-wider transition-all ${mode === m
-                                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'
-                                : 'text-slate-500 hover:text-slate-300 border border-transparent'
-                                }`}
+                            className={`px - 6 py - 2 font - mono font - bold tracking - wider transition - all ${
+    mode === m
+    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'
+    : 'text-slate-500 hover:text-slate-300 border border-transparent'
+} `}
                         >
                             {m}
                         </button>
@@ -610,10 +603,10 @@ function App() {
                                             const url = URL.createObjectURL(blob)
                                             const a = document.createElement('a')
                                             a.href = url
-                                            a.download = `${selectedChip.name}_backup.bin`
+                                            a.download = `${ selectedChip.name } _backup.bin`
                                             a.click()
                                             URL.revokeObjectURL(url)
-                                            setLog(prev => [...prev.slice(-49), `Saved backup to ${selectedChip.name}_backup.bin`])
+                                            setLog(prev => [...prev.slice(-49), `Saved backup to ${ selectedChip.name } _backup.bin`])
                                         }}
                                     >
                                         SAVE FILE

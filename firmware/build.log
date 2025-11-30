@@ -1,0 +1,41 @@
+Processing pico (platform: https://github.com/maxgerhardt/platform-raspberrypi.git; board: pico; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/raspberrypi/pico.html
+PLATFORM: Raspberry Pi RP2040 (1.18.0+sha.a1df30f) > Raspberry Pi Pico
+HARDWARE: RP2040 133MHz, 256KB RAM, 2MB Flash
+DEBUG: Current (blackmagic) External (blackmagic, cmsis-dap, jlink, pico-debug, picoprobe, raspberrypi-swd)
+PACKAGES: 
+ - framework-arduinopico @ 1.50401.0+sha.0affea4 
+ - tool-picotool-rp2040-earlephilhower @ 5.140200.250530 (14.2.0) 
+ - tool-pioasm-rp2040-earlephilhower @ 5.140200.250530 (14.2.0) 
+ - toolchain-rp2040-earlephilhower @ 5.140200.250530 (14.2.0)
+Flash size: 2.00MB
+Sketch size: 2.00MB
+Filesystem size: 0.00MB
+PSRAM size: 0.00MB
+Maximium Sketch size: 2093056 EEPROM start: 0x101ff000 Filesystem start: 0x101ff000 Filesystem end: 0x101ff000
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 69 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- Wire @ 1.0
+|-- SPI @ 1.0
+Building in release mode
+Compiling .pio/build/pico/src/protocol/OPUP.cpp.o
+<command-line>: warning: "USB_MANUFACTURER" redefined
+<command-line>: note: this is the location of the previous definition
+<command-line>: warning: "USB_PRODUCT" redefined
+<command-line>: note: this is the location of the previous definition
+Linking .pio/build/pico/firmware.elf
+Generating UF2 image
+picotool uf2 convert -t elf ".pio/build/pico/firmware.elf" ".pio/build/pico/firmware.uf2"
+Retrieving maximum program size .pio/build/pico/firmware.elf
+Checking size .pio/build/pico/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [=         ]   5.5% (used 14364 bytes from 262144 bytes)
+Flash: [          ]   3.5% (used 72776 bytes from 2093056 bytes)
+Building .pio/build/pico/firmware.bin
+Building .pio/build/pico/firmware.bin.signed
+========================= [SUCCESS] Took 1.76 seconds =========================

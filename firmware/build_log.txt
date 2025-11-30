@@ -1,0 +1,66 @@
+Processing pico (platform: https://github.com/maxgerhardt/platform-raspberrypi.git; board: pico; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/raspberrypi/pico.html
+PLATFORM: Raspberry Pi RP2040 (1.18.0+sha.a1df30f) > Raspberry Pi Pico
+HARDWARE: RP2040 133MHz, 256KB RAM, 2MB Flash
+DEBUG: Current (blackmagic) External (blackmagic, cmsis-dap, jlink, pico-debug, picoprobe, raspberrypi-swd)
+PACKAGES: 
+ - framework-arduinopico @ 1.50401.0+sha.0affea4 
+ - tool-picotool-rp2040-earlephilhower @ 5.140200.250530 (14.2.0) 
+ - tool-pioasm-rp2040-earlephilhower @ 5.140200.250530 (14.2.0) 
+ - toolchain-rp2040-earlephilhower @ 5.140200.250530 (14.2.0)
+Flash size: 2.00MB
+Sketch size: 2.00MB
+Filesystem size: 0.00MB
+PSRAM size: 0.00MB
+Maximium Sketch size: 2093056 EEPROM start: 0x101ff000 Filesystem start: 0x101ff000 Filesystem end: 0x101ff000
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 69 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- Wire @ 1.0
+|-- SPI @ 1.0
+Building in release mode
+Compiling .pio/build/pico/src/main.cpp.o
+<command-line>: warning: "USB_MANUFACTURER" redefined
+<command-line>: note: this is the location of the previous definition
+<command-line>: warning: "USB_PRODUCT" redefined
+<command-line>: note: this is the location of the previous definition
+Generating linkerscript /home/wm/.gemini/antigravity/scratch/UniProg-X/firmware/.pio/build/pico/memmap_default.ld
+Compiling .pio/build/pico/lib591/Wire/Wire.cpp.o
+Compiling .pio/build/pico/lib2b7/SPI/SPI.cpp.o
+<command-line>: warning: "USB_MANUFACTURER" redefined
+<command-line>: note: this is the location of the previous definition
+<command-line>: warning: "USB_PRODUCT" redefined
+<command-line>: note: this is the location of the previous definition
+<command-line>: warning: "USB_MANUFACTURER" redefined
+<command-line>: note: this is the location of the previous definition
+<command-line>: warning: "USB_PRODUCT" redefined
+<command-line>: note: this is the location of the previous definition
+Compiling .pio/build/pico/FrameworkArduino/BluetoothDebug.cpp.o
+<command-line>: warning: "USB_MANUFACTURER" redefined
+<command-line>: note: this is the location of the previous definition
+<command-line>: warning: "USB_PRODUCT" redefined
+<command-line>: note: this is the location of the previous definition
+Compiling .pio/build/pico/FrameworkArduino/Bootsel.cpp.o
+<command-line>: warning: "USB_MANUFACTURER" redefined
+<command-line>: note: this is the location of the previous definition
+<command-line>: warning: "USB_PRODUCT" redefined
+<command-line>: note: this is the location of the previous definition
+src/main.cpp:9:10: fatal error: rp2040_driver.h: No such file or directory
+
+***********************************************************************
+* Looking for rp2040_driver.h dependency? Check our library registry!
+*
+* CLI  > platformio lib search "header:rp2040_driver.h"
+* Web  > https://registry.platformio.org/search?q=header:rp2040_driver.h
+*
+***********************************************************************
+
+    9 | #include "rp2040_driver.h"
+      |          ^~~~~~~~~~~~~~~~~
+compilation terminated.
+*** [.pio/build/pico/src/main.cpp.o] Error 1
+========================== [FAILED] Took 1.47 seconds ==========================
