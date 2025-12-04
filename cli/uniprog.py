@@ -291,6 +291,88 @@ class OPUPClient:
         print("✗ Failed to set QSPI mode")
         return False
     
+    def qspi_read(self, cmd: int, addr: int, addr_len: int, dummy: int, read_len: int) -> bytes:
+        """QSPI read operation"""
+        # Build payload: [Cmd:1][AddrLen:1][Addr:3-4][DummyCycles:1][ReadLen:2]
+        payload = bytes([cmd, addr_len])
+        # Add address bytes (little-endian)
+        for i in range(addr_len):
+            payload += bytes([(addr >> (i * 8)) & 0xFF])
+        payload += bytes([dummy])
+        payload += bytes([read_len & 0xFF, (read_len >> 8) & 0xFF])
+        
+        ok, data = self.send_command(OpupCmd.QSPI_READ, payload)
+        if ok:
+            print(f"✓ QSPI read {read_len} bytes from 0x{addr:06X}")
+            return data
+        print("✗ QSPI read failed")
+        return b''
+    
+    def qspi_fast_read(self, addr: int, pages: int = 1) -> bytes:
+        """Fast read pages using current QSPI mode"""
+        # Payload: [Addr:3][PageCount:1]
+        payload = bytes([
+            addr & 0xFF,
+            (addr >> 8) & 0xFF,
+            (addr >> 16) & 0xFF,
+            pages
+        ])
+        ok, data = self.send_command(OpupCmd.QSPI_FAST_READ, payload)
+        if ok:
+            print(f"✓ Fast read {pages} pages ({len(data)} bytes) from 0x{addr:06X}")
+            return data
+        print("✗ Fast read failed")
+        return b''
+    
+    def qspi_cmd(self, cmd: int, tx_data: bytes = b'') -> bytes:
+        """Execute raw QSPI command"""
+        # Payload: [Cmd:1][TxLen:1][TxData:N]
+        payload = bytes([cmd, len(tx_data)]) + tx_data
+        ok, data = self.send_command(OpupCmd.QSPI_CMD, payload)
+        if ok:
+            print(f"✓ QSPI cmd 0x{cmd:02X}: TX {len(tx_data)} -> RX {len(data)}")
+            return data
+        print("✗ QSPI cmd failed")
+        return b''
+    
+    def qspi_test_all_modes(self):
+        """Test JEDEC ID read in all QSPI modes"""
+        print("\n=== Testing All QSPI Modes ===")
+        mode_names = [
+            (0, "Standard (1-1-1)", 0x9F),      # JEDEC command
+            (1, "Dual Output (1-1-2)", 0x9F),   # JEDEC still works
+            (2, "Dual I/O (1-2-2)", 0x9F),      # JEDEC still works
+            (3, "Quad Output (1-1-4)", 0x9F),   # JEDEC still works
+            (4, "Quad I/O (1-4-4)", 0x9F),      # JEDEC still works
+        ]
+        
+        results = []
+        for mode, name, cmd in mode_names:
+            print(f"\n--- Mode {mode}: {name} ---")
+            self.qspi_set_mode(mode)
+            # Read JEDEC ID using qspi_cmd
+            data = self.qspi_cmd(cmd, b'\x00\x00\x00')
+            if len(data) >= 3:
+                mfg, dev_h, dev_l = data[0], data[1], data[2]
+                dev_id = (dev_h << 8) | dev_l
+                ok = mfg != 0x00 and mfg != 0xFF
+                status = "✓" if ok else "✗"
+                print(f"{status} JEDEC ID: Mfg=0x{mfg:02X} Dev=0x{dev_id:04X}")
+                results.append((mode, name, ok, mfg, dev_id))
+            else:
+                print("✗ No data received")
+                results.append((mode, name, False, 0, 0))
+        
+        # Reset to standard mode
+        self.qspi_set_mode(0)
+        
+        print("\n=== Results Summary ===")
+        for mode, name, ok, mfg, dev_id in results:
+            status = "PASS" if ok else "FAIL"
+            print(f"  Mode {mode}: {name} -> [{status}]")
+        
+        return results
+    
     def isp_enter(self) -> bool:
         """Enter ISP programming mode"""
         ok, payload = self.send_command(OpupCmd.ISP_ENTER)
@@ -424,6 +506,42 @@ Examples:
         
         elif cmd == 'gpio-test':
             client.gpio_test()
+        
+        elif cmd == 'qspi-read':
+            if len(args.args) < 2:
+                print("Usage: qspi-read <addr> <len>")
+                print("Example: qspi-read 0x000000 256")
+            else:
+                addr = int(args.args[0], 0)
+                length = int(args.args[1])
+                data = client.qspi_read(0x03, addr, 3, 0, length)
+                if data:
+                    print(f"Data: {data[:32].hex(' ')}{'...' if len(data) > 32 else ''}")
+        
+        elif cmd == 'qspi-fast-read':
+            if len(args.args) < 1:
+                print("Usage: qspi-fast-read <addr> [pages]")
+                print("Example: qspi-fast-read 0x000000 1")
+            else:
+                addr = int(args.args[0], 0)
+                pages = int(args.args[1]) if len(args.args) > 1 else 1
+                data = client.qspi_fast_read(addr, pages)
+                if data:
+                    print(f"Data: {data[:32].hex(' ')}{'...' if len(data) > 32 else ''}")
+        
+        elif cmd == 'qspi-cmd':
+            if not args.args:
+                print("Usage: qspi-cmd <cmd_hex> [data_hex]")
+                print("Example: qspi-cmd 9F 000000")
+            else:
+                cmd_byte = int(args.args[0], 16)
+                tx_data = bytes.fromhex(args.args[1]) if len(args.args) > 1 else b''
+                data = client.qspi_cmd(cmd_byte, tx_data)
+                if data:
+                    print(f"RX: {data.hex(' ')}")
+        
+        elif cmd == 'qspi-test':
+            client.qspi_test_all_modes()
         
         else:
             print(f"Unknown command: {cmd}")

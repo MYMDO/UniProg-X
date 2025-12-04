@@ -1,99 +1,102 @@
 # UniProg-X CLI
 
-Command-line interface for testing UniProg-X OPUP protocol.
+Python command-line interface for testing and debugging UniProg-X OPUP protocol.
 
 ## Installation
 
 ```bash
-cd cli/
 pip install -r requirements.txt
 ```
 
 ## Usage
 
 ```bash
-# Basic syntax
 python uniprog.py -p <port> <command> [args]
-
-# Examples (Linux)
-python uniprog.py -p /dev/ttyACM0 ping
-python uniprog.py -p /dev/ttyACM0 spi-scan
-python uniprog.py -p /dev/ttyACM0 i2c-scan
-
-# Examples (macOS)
-python uniprog.py -p /dev/cu.usbmodem* ping
-
-# Examples (Windows)
-python uniprog.py -p COM3 ping
 ```
 
 ## Commands
 
+### System
 | Command | Description |
 |---------|-------------|
-| `ping` | Test connection |
-| `status` | Get device status (uptime, RAM) |
-| `i2c-scan` | Scan I2C bus for devices |
+| `ping` | Test connection (returns CAFE) |
+| `status` | Get device uptime and status |
+| `gpio-test` | Read SPI GPIO pin states |
+
+### SPI Flash
+| Command | Description |
+|---------|-------------|
 | `spi-scan` | Detect SPI flash (JEDEC ID) |
 | `spi-raw <hex>` | Raw SPI transfer |
 | `spi-jedec` | Read JEDEC ID directly |
+
+### QSPI Modes
+| Command | Description |
+|---------|-------------|
 | `qspi-mode <0-5>` | Set QSPI mode |
+| `qspi-read <addr> <len>` | Read data |
+| `qspi-fast-read <addr> [pages]` | Fast read (mode-aware) |
+| `qspi-cmd <cmd_hex> [data_hex]` | Raw QSPI command |
+| `qspi-test` | Test all QSPI modes |
+
+### I2C
+| Command | Description |
+|---------|-------------|
+| `i2c-scan` | Scan I2C bus for devices |
+
+### AVR ISP
+| Command | Description |
+|---------|-------------|
 | `avr-sig` | Read AVR signature |
 | `isp-enter` | Enter ISP mode |
 | `isp-exit` | Exit ISP mode |
 
-## QSPI Modes
+## QSPI Mode Reference
 
-| Mode | Name | Description |
-|------|------|-------------|
-| 0 | Standard | 1-1-1 (default) |
-| 1 | Dual Output | 1-1-2 |
-| 2 | Dual I/O | 1-2-2 |
-| 3 | Quad Output | 1-1-4 |
-| 4 | Quad I/O | 1-4-4 |
-| 5 | QPI | 4-4-4 |
+| Mode | Name | CMD | ADDR | DATA |
+|------|------|-----|------|------|
+| 0 | Standard | 1 | 1 | 1 |
+| 1 | Dual Output | 1 | 1 | 2 |
+| 2 | Dual I/O | 1 | 2 | 2 |
+| 3 | Quad Output | 1 | 1 | 4 |
+| 4 | Quad I/O | 1 | 4 | 4 |
+| 5 | QPI | 4 | 4 | 4 |
 
 ## Examples
 
-### Test Connection
 ```bash
-$ python uniprog.py -p /dev/ttyACM0 ping
-✓ Connected to /dev/ttyACM0
-TX: a5 01 01 00 00 00 ...
-RX: a5 01 01 01 02 00 ca fe ...
-✓ PING OK (CAFE)
-```
+# Test connection
+python uniprog.py -p /dev/ttyACM0 ping
 
-### Scan SPI Flash
-```bash
-$ python uniprog.py -p /dev/ttyACM0 spi-scan
-✓ Connected to /dev/ttyACM0
-TX: a5 01 20 00 00 00 ...
-RX: a5 01 20 01 04 00 01 ef 40 17 ...
-✓ SPI Flash detected:
-  Manufacturer: Winbond (0xEF)
-  Device ID: 0x4017
-```
+# Detect SPI flash
+python uniprog.py -p /dev/ttyACM0 spi-scan
 
-### Raw SPI Transfer
-```bash
-$ python uniprog.py -p /dev/ttyACM0 spi-raw 9F000000
-✓ Connected to /dev/ttyACM0
-TX: a5 01 22 00 04 00 9f 00 00 00 ...
-RX: a5 01 22 01 04 00 ff ef 40 17 ...
-✓ SPI transfer: 9f 00 00 00 -> ff ef 40 17
+# Set Quad SPI mode
+python uniprog.py -p /dev/ttyACM0 qspi-mode 3
+
+# Read 256 bytes from address 0
+python uniprog.py -p /dev/ttyACM0 qspi-read 0x000000 256
+
+# Fast read 1 page (256 bytes)
+python uniprog.py -p /dev/ttyACM0 qspi-fast-read 0x000000 1
+
+# Test all QSPI modes
+python uniprog.py -p /dev/ttyACM0 qspi-test
+
+# Read JEDEC ID via raw command
+python uniprog.py -p /dev/ttyACM0 qspi-cmd 9F 000000
 ```
 
 ## Troubleshooting
 
-### "Permission denied" on Linux
+### Permission denied (Linux)
 ```bash
 sudo chmod 666 /dev/ttyACM0
-# or add yourself to dialout group
+# or add to dialout group
 sudo usermod -a -G dialout $USER
 ```
 
 ### No response
-- Check USB cable
-- Verify correct port: `ls /dev/ttyACM* /dev/ttyUSB*`
-- Reset UniProg-X
+- Check USB connection
+- Verify port: `ls /dev/ttyACM* /dev/ttyUSB*`
+- Reset UniProg-X device

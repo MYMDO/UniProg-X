@@ -95,6 +95,45 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
     ```
 6.  Open `http://localhost:5173` in a compatible browser (Chrome, Edge, Opera).
 
+### CLI Tool (Python)
+For testing and debugging without a browser:
+```bash
+cd cli/
+pip install -r requirements.txt
+python uniprog.py -p /dev/ttyACM0 ping
+```
+
+## 🔌 QSPI/QPI Modes
+
+UniProg-X supports all standard Serial Flash memory modes:
+
+| Mode | Name | CMD | ADDR | DATA | Description |
+|------|------|-----|------|------|-------------|
+| 0 | Standard | 1 | 1 | 1 | Classic SPI (default) |
+| 1 | Dual Output | 1 | 1 | 2 | Data on IO0+IO1 |
+| 2 | Dual I/O | 1 | 2 | 2 | Addr+Data on IO0+IO1 |
+| 3 | Quad Output | 1 | 1 | 4 | Data on IO0-IO3 |
+| 4 | Quad I/O | 1 | 4 | 4 | Addr+Data on IO0-IO3 |
+| 5 | QPI | 4 | 4 | 4 | Everything on 4 wires |
+
+### CLI QSPI Commands
+```bash
+# Set mode
+python uniprog.py -p /dev/ttyACM0 qspi-mode 3    # Quad Output
+
+# Read data
+python uniprog.py -p /dev/ttyACM0 qspi-read 0x000000 256
+
+# Fast read (mode-aware)
+python uniprog.py -p /dev/ttyACM0 qspi-fast-read 0x000000 1
+
+# Raw command (JEDEC ID)
+python uniprog.py -p /dev/ttyACM0 qspi-cmd 9F 000000
+
+# Test all modes
+python uniprog.py -p /dev/ttyACM0 qspi-test
+```
+
 ## 📖 Usage Guide
 
 1.  **Connect**: Plug in your RP2040 and click **"INITIALIZE LINK"** in the web interface. Select the device from the browser prompt.
