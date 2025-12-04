@@ -30,10 +30,12 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
 | :--- | :--- | :--- | :--- |
 | **I2C SDA** | GPIO 4 | Pin 6 | I2C Data |
 | **I2C SCL** | GPIO 5 | Pin 7 | I2C Clock |
-| **SPI RX** | GPIO 16 | Pin 21 | MISO (Master In Slave Out) |
+| **SPI IO0/MOSI** | GPIO 19 | Pin 25 | MOSI / IO0 (Quad) |
+| **SPI IO1/MISO** | GPIO 16 | Pin 21 | MISO / IO1 (Quad) |
+| **SPI IO2 (/WP)** | GPIO 21 | Pin 27 | Write Protect / IO2 (Quad) |
+| **SPI IO3 (/HOLD)** | GPIO 22 | Pin 29 | Hold-Reset / IO3 (Quad) |
 | **SPI CS** | GPIO 17 | Pin 22 | Chip Select |
 | **SPI SCK** | GPIO 18 | Pin 24 | SPI Clock |
-| **SPI TX** | GPIO 19 | Pin 25 | MOSI (Master Out Slave In) |
 | **AVR RESET** | GPIO 20 | Pin 26 | AVR Reset (ISP) |
 | **SWD SWCLK** | GPIO 2 | Pin 4 | SWD Clock (STM32) |
 | **SWD SWDIO** | GPIO 3 | Pin 5 | SWD Data (STM32) |
@@ -41,6 +43,7 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
 | **3V3** | 3V3(OUT) | Pin 36 | 3.3V Power Supply |
 
 > **Note**: Ensure your target chip operates at 3.3V. For 1.8V or 5V chips, level shifters are required.
+> For standard SPI mode, IO2 and IO3 should be pulled HIGH to disable /WP and /HOLD.
 
 ## 💾 Supported Chips
 
@@ -49,9 +52,12 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
 *   **Atmel**: AT24C01 - AT24C512
 *   *Auto-detection supported for standard address 0x50*
 
-### SPI Flash (W25QXX)
-*   **Winbond**: W25Q16 (2MB), W25Q32 (4MB), W25Q64 (8MB), W25Q128 (16MB), W25Q256 (32MB)
-*   **Generic**: Compatible with most standard SPI Flash chips supporting JEDEC ID (0x9F).
+### SPI Flash (W25QXX / GD25QXX / MX25LXX)
+*   **Winbond**: W25Q16, W25Q32, W25Q64, W25Q128, W25Q256
+*   **GigaDevice**: GD25Q64C, GD25Q128C
+*   **Macronix**: MX25L6433F, MX25L12835F
+*   **Modes**: Standard SPI, Dual Output, Dual I/O, Quad Output, Quad I/O, QPI
+*   *Auto-detection via JEDEC ID (0x9F)*
 
 ### AVR Microcontrollers (ISP)
 *   **ATmega**: ATmega328P (32KB), ATmega168 (16KB)

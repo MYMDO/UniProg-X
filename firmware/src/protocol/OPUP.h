@@ -30,6 +30,13 @@ enum OpupCmd : uint8_t {
   SPI_CONFIG = 0x21,
   SPI_XFER = 0x22,
 
+  // QSPI Commands (Quad SPI modes)
+  QSPI_SET_MODE = 0x25,  // Set QSPI mode (0-5)
+  QSPI_READ = 0x26,      // Read with current mode
+  QSPI_WRITE = 0x27,     // Write with current mode
+  QSPI_FAST_READ = 0x28, // Fast page read
+  QSPI_CMD = 0x29,       // Raw command execution
+
   ISP_ENTER = 0x30,
   ISP_XFER = 0x31,
   ISP_EXIT = 0x32,

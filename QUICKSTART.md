@@ -76,19 +76,38 @@ Open http://localhost:5173 in Chrome/Edge/Opera.
 
 ## Pinout Reference
 
-| Function  | GPIO | Pin | Notes                |
-|-----------|------|-----|----------------------|
-| I2C SDA   | GP4  | 6   | Pull-up recommended  |
-| I2C SCL   | GP5  | 7   | Pull-up recommended  |
-| SPI MISO  | GP16 | 21  |                      |
-| SPI CS    | GP17 | 22  |                      |
-| SPI SCK   | GP18 | 24  |                      |
-| SPI MOSI  | GP19 | 25  |                      |
-| AVR RESET | GP20 | 26  | For ISP programming  |
-| SWD SWCLK | GP2  | 4   | For STM32 SWD        |
-| SWD SWDIO | GP3  | 5   | For STM32 SWD        |
-| 3.3V OUT  | 3V3  | 36  | Max 300mA            |
-| GND       | GND  | 3,8 | Common ground        |
+| Function  | GPIO | Pin | Notes                    |
+|-----------|------|-----|--------------------------|
+| I2C SDA   | GP4  | 6   | Pull-up recommended      |
+| I2C SCL   | GP5  | 7   | Pull-up recommended      |
+| SPI IO0   | GP19 | 25  | MOSI (Quad: IO0)         |
+| SPI IO1   | GP16 | 21  | MISO (Quad: IO1)         |
+| SPI IO2   | GP21 | 27  | /WP (Quad: IO2)          |
+| SPI IO3   | GP22 | 29  | /HOLD (Quad: IO3)        |
+| SPI CS    | GP17 | 22  | Chip Select              |
+| SPI SCK   | GP18 | 24  | Clock                    |
+| AVR RESET | GP20 | 26  | For ISP programming      |
+| SWD SWCLK | GP2  | 4   | For STM32 SWD            |
+| SWD SWDIO | GP3  | 5   | For STM32 SWD            |
+| 3.3V OUT  | 3V3  | 36  | Max 300mA                |
+| GND       | GND  | 3,8 | Common ground            |
+
+### QSPI Flash Wiring (8-pin SOIC)
+```
+UniProg-X         Flash Chip
+---------         ----------
+GP17 (CS)  ────►  Pin 1 (CS#)
+GP16 (IO1) ◄───►  Pin 2 (DO/IO1)
+GP21 (IO2) ◄───►  Pin 3 (/WP/IO2)
+GND        ────►  Pin 4 (GND)
+GP19 (IO0) ◄───►  Pin 5 (DI/IO0)
+GP18 (SCK) ────►  Pin 6 (CLK)
+GP22 (IO3) ◄───►  Pin 7 (/HOLD/IO3)
+3V3        ────►  Pin 8 (VCC)
+```
+
+> **Standard SPI mode**: IO2 and IO3 can be left unconnected (pulled HIGH internally).
+> **Quad SPI mode**: All 6 wires required for full speed.
 
 ⚠️ **Important**: All signals are 3.3V. Use level shifters for 5V targets.
 

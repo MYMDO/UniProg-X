@@ -1,9 +1,15 @@
+import { QSPIMode } from './opup';
+
 export interface ChipDef {
     name: string;
     type: 'I2C' | 'SPI' | 'AVR' | 'STM32';
     size: number; // in bytes
     pageSize: number; // in bytes
     address?: number; // I2C address
+
+    // QSPI capabilities (for SPI Flash only)
+    qspiModes?: QSPIMode[]; // Supported QSPI modes
+    jedecId?: number; // JEDEC manufacturer ID (e.g., 0xEF for Winbond)
 }
 
 export const CHIP_DB: ChipDef[] = [
@@ -31,18 +37,53 @@ export const CHIP_DB: ChipDef[] = [
     { name: 'AT24C256', type: 'I2C', size: 32768, pageSize: 64, address: 0x50 },
     { name: 'AT24C512', type: 'I2C', size: 65536, pageSize: 128, address: 0x50 },
 
-    // SPI Flash - Winbond W25QXX Series
-    { name: 'W25Q16', type: 'SPI', size: 2 * 1024 * 1024, pageSize: 256 },
-    { name: 'W25Q32', type: 'SPI', size: 4 * 1024 * 1024, pageSize: 256 },
-    { name: 'W25Q64', type: 'SPI', size: 8 * 1024 * 1024, pageSize: 256 },
-    { name: 'W25Q128', type: 'SPI', size: 16 * 1024 * 1024, pageSize: 256 },
-    { name: 'W25Q256', type: 'SPI', size: 32 * 1024 * 1024, pageSize: 256 },
+    // SPI Flash - Winbond W25QXX Series (Dual/Quad SPI & QPI support)
+    {
+        name: 'W25Q16', type: 'SPI', size: 2 * 1024 * 1024, pageSize: 256, jedecId: 0xEF,
+        qspiModes: [QSPIMode.STANDARD, QSPIMode.DUAL_OUT, QSPIMode.DUAL_IO, QSPIMode.QUAD_OUT, QSPIMode.QUAD_IO, QSPIMode.QPI]
+    },
+    {
+        name: 'W25Q32', type: 'SPI', size: 4 * 1024 * 1024, pageSize: 256, jedecId: 0xEF,
+        qspiModes: [QSPIMode.STANDARD, QSPIMode.DUAL_OUT, QSPIMode.DUAL_IO, QSPIMode.QUAD_OUT, QSPIMode.QUAD_IO, QSPIMode.QPI]
+    },
+    {
+        name: 'W25Q64', type: 'SPI', size: 8 * 1024 * 1024, pageSize: 256, jedecId: 0xEF,
+        qspiModes: [QSPIMode.STANDARD, QSPIMode.DUAL_OUT, QSPIMode.DUAL_IO, QSPIMode.QUAD_OUT, QSPIMode.QUAD_IO, QSPIMode.QPI]
+    },
+    {
+        name: 'W25Q128', type: 'SPI', size: 16 * 1024 * 1024, pageSize: 256, jedecId: 0xEF,
+        qspiModes: [QSPIMode.STANDARD, QSPIMode.DUAL_OUT, QSPIMode.DUAL_IO, QSPIMode.QUAD_OUT, QSPIMode.QUAD_IO, QSPIMode.QPI]
+    },
+    {
+        name: 'W25Q256', type: 'SPI', size: 32 * 1024 * 1024, pageSize: 256, jedecId: 0xEF,
+        qspiModes: [QSPIMode.STANDARD, QSPIMode.DUAL_OUT, QSPIMode.DUAL_IO, QSPIMode.QUAD_OUT, QSPIMode.QUAD_IO, QSPIMode.QPI]
+    },
 
-    // SPI Flash - Legacy naming
-    { name: '25Q16', type: 'SPI', size: 2 * 1024 * 1024, pageSize: 256 },
-    { name: '25Q32', type: 'SPI', size: 4 * 1024 * 1024, pageSize: 256 },
-    { name: '25Q64', type: 'SPI', size: 8 * 1024 * 1024, pageSize: 256 },
-    { name: '25Q128', type: 'SPI', size: 16 * 1024 * 1024, pageSize: 256 },
+    // SPI Flash - Macronix MX25LXXX Series (Quad support)
+    {
+        name: 'MX25L6433F', type: 'SPI', size: 8 * 1024 * 1024, pageSize: 256, jedecId: 0xC2,
+        qspiModes: [QSPIMode.STANDARD, QSPIMode.DUAL_OUT, QSPIMode.QUAD_OUT, QSPIMode.QUAD_IO]
+    },
+    {
+        name: 'MX25L12835F', type: 'SPI', size: 16 * 1024 * 1024, pageSize: 256, jedecId: 0xC2,
+        qspiModes: [QSPIMode.STANDARD, QSPIMode.DUAL_OUT, QSPIMode.QUAD_OUT, QSPIMode.QUAD_IO]
+    },
+
+    // SPI Flash - GigaDevice GD25QXX Series (Dual/Quad/QPI support)
+    {
+        name: 'GD25Q64C', type: 'SPI', size: 8 * 1024 * 1024, pageSize: 256, jedecId: 0xC8,
+        qspiModes: [QSPIMode.STANDARD, QSPIMode.DUAL_OUT, QSPIMode.DUAL_IO, QSPIMode.QUAD_OUT, QSPIMode.QUAD_IO, QSPIMode.QPI]
+    },
+    {
+        name: 'GD25Q128C', type: 'SPI', size: 16 * 1024 * 1024, pageSize: 256, jedecId: 0xC8,
+        qspiModes: [QSPIMode.STANDARD, QSPIMode.DUAL_OUT, QSPIMode.DUAL_IO, QSPIMode.QUAD_OUT, QSPIMode.QUAD_IO, QSPIMode.QPI]
+    },
+
+    // SPI Flash - Legacy naming (Standard SPI only for compatibility)
+    { name: '25Q16', type: 'SPI', size: 2 * 1024 * 1024, pageSize: 256, qspiModes: [QSPIMode.STANDARD] },
+    { name: '25Q32', type: 'SPI', size: 4 * 1024 * 1024, pageSize: 256, qspiModes: [QSPIMode.STANDARD] },
+    { name: '25Q64', type: 'SPI', size: 8 * 1024 * 1024, pageSize: 256, qspiModes: [QSPIMode.STANDARD] },
+    { name: '25Q128', type: 'SPI', size: 16 * 1024 * 1024, pageSize: 256, qspiModes: [QSPIMode.STANDARD] },
 
     // AVR Microcontrollers
     { name: 'ATmega328P', type: 'AVR', size: 32 * 1024, pageSize: 128 },
@@ -53,3 +94,18 @@ export const CHIP_DB: ChipDef[] = [
     { name: 'STM32F103C8', type: 'STM32', size: 64 * 1024, pageSize: 1024 },
     { name: 'STM32F103CB', type: 'STM32', size: 128 * 1024, pageSize: 1024 },
 ];
+
+/**
+ * Get human-readable name for QSPI mode
+ */
+export function getQSPIModeName(mode: QSPIMode): string {
+    switch (mode) {
+        case QSPIMode.STANDARD: return 'Standard (1-1-1)';
+        case QSPIMode.DUAL_OUT: return 'Dual Output (1-1-2)';
+        case QSPIMode.DUAL_IO: return 'Dual I/O (1-2-2)';
+        case QSPIMode.QUAD_OUT: return 'Quad Output (1-1-4)';
+        case QSPIMode.QUAD_IO: return 'Quad I/O (1-4-4)';
+        case QSPIMode.QPI: return 'QPI (4-4-4)';
+        default: return 'Unknown';
+    }
+}

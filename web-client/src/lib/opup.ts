@@ -17,6 +17,13 @@ export enum OpupCmd {
     SPI_CONFIG = 0x21,
     SPI_XFER = 0x22,
 
+    // QSPI Commands (Quad SPI modes)
+    QSPI_SET_MODE = 0x25,   // Set QSPI mode (0-5)
+    QSPI_READ = 0x26,       // Read with current mode
+    QSPI_WRITE = 0x27,      // Write with current mode
+    QSPI_FAST_READ = 0x28,  // Fast page read
+    QSPI_CMD = 0x29,        // Raw command execution
+
     ISP_ENTER = 0x30,
     ISP_XFER = 0x31,
     ISP_EXIT = 0x32,
@@ -26,6 +33,19 @@ export enum OpupCmd {
     SWD_WRITE = 0x42,
 
     BOOTLOADER = 0x50
+}
+
+/**
+ * QSPI Operating Modes
+ * Format notation: CMD-ADDR-DATA (number of IO lines used)
+ */
+export enum QSPIMode {
+    STANDARD = 0,   // 1-1-1: Standard SPI (default)
+    DUAL_OUT = 1,   // 1-1-2: Dual output (data on IO0+IO1)
+    DUAL_IO = 2,    // 1-2-2: Dual I/O (addr+data on IO0+IO1)
+    QUAD_OUT = 3,   // 1-1-4: Quad output (data on IO0-IO3)
+    QUAD_IO = 4,    // 1-4-4: Quad I/O (addr+data on IO0-IO3)
+    QPI = 5         // 4-4-4: Full QPI (cmd+addr+data on IO0-IO3)
 }
 
 export interface OpupPacket {

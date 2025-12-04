@@ -130,6 +130,60 @@ Commands are organized by functional groups:
   - `Dev`: Device ID (uint16, LE)
 - **Description**: Scan for SPI Flash using JEDEC ID (0x9F)
 
+## 7.1 QSPI Commands (0x25 - 0x29)
+
+UniProg-X supports advanced Quad SPI modes for high-speed Serial Flash programming.
+
+### QSPI Mode Values
+
+| Mode | Value | Name | Description |
+|------|-------|------|-------------|
+| Standard | 0 | 1-1-1 | Classic single-wire SPI |
+| Dual Output | 1 | 1-1-2 | Data output on IO0+IO1 |
+| Dual I/O | 2 | 1-2-2 | Address+Data on IO0+IO1 |
+| Quad Output | 3 | 1-1-4 | Data on IO0-IO3 |
+| Quad I/O | 4 | 1-4-4 | Address+Data on IO0-IO3 |
+| QPI | 5 | 4-4-4 | Full 4-wire mode |
+
+### 0x25: QSPI_SET_MODE
+- **Request**: `[Mode:1]` (0-5, see table above)
+- **Response**: `[CurrentMode:1]`
+- **Description**: Set QSPI operating mode. Mode persists until changed.
+
+### 0x26: QSPI_READ
+- **Request**: `[Cmd:1][AddrLen:1][Addr:3-4][DummyCycles:1][ReadLen:2]`
+  - `Cmd`: Flash read command (e.g., 0x03, 0x0B, 0x3B, 0x6B, 0xEB)
+  - `AddrLen`: Address length (3 or 4 bytes)
+  - `Addr`: Address (little-endian)
+  - `DummyCycles`: Number of dummy clock cycles
+  - `ReadLen`: Bytes to read (uint16, LE)
+- **Response**: `[Data:N]`
+- **Description**: Read data using current QSPI mode
+
+### 0x27: QSPI_WRITE
+- **Request**: `[Cmd:1][AddrLen:1][Addr:3-4][Data:N]`
+  - `Cmd`: Flash write command (e.g., 0x02, 0x32)
+  - `AddrLen`: Address length (3 or 4 bytes)
+  - `Addr`: Address (little-endian)
+  - `Data`: Data to write
+- **Response**: Empty (success) or error
+- **Description**: Write data using current QSPI mode
+
+### 0x28: QSPI_FAST_READ
+- **Request**: `[Addr:3][PageCount:1]`
+  - `Addr`: 24-bit start address
+  - `PageCount`: Number of 256-byte pages to read (max 16)
+- **Response**: `[Data:256*PageCount]`
+- **Description**: Optimized page read using mode-appropriate fast read command
+
+### 0x29: QSPI_CMD
+- **Request**: `[Cmd:1][TxLen:1][TxData:N]`
+  - `Cmd`: Flash command to execute
+  - `TxLen`: Data length (for read or both directions)
+  - `TxData`: Optional data to send
+- **Response**: `[RxData:TxLen]`
+- **Description**: Execute raw flash command
+
 ## 8. AVR ISP Commands (0x30 - 0x3F)
 
 ### 0x30: ISP_ENTER
