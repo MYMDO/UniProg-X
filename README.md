@@ -53,11 +53,24 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
 *   *Auto-detection supported for standard address 0x50*
 
 ### SPI Flash (W25QXX / GD25QXX / MX25LXX)
-*   **Winbond**: W25Q16, W25Q32, W25Q64, W25Q128, W25Q256
+
+**Verified Chips:**
+
+| Chip | JEDEC ID | Size | Std | Dual | Quad | QPI |
+|------|----------|------|-----|------|------|-----|
+| **Winbond W25Q80** | 0xEF 0x4014 | 1 MB | ✅ | ✅ | ✅ | ✅ |
+| **Winbond W25Q64** | 0xEF 0x4017 | 8 MB | ✅ | ✅ | ✅ | ✅ |
+| **Winbond W25Q128** | 0xEF 0x4018 | 16 MB | ✅ | ✅ | ✅ | ✅ |
+| **Macronix MX25L3206E** | 0xC2 0x2016 | 4 MB | ✅ | ✅ | ❌* | ❌* |
+
+*\* MX25L3206E is a Dual-only chip without Quad hardware support*
+
+**Also Supported (untested):**
+*   **Winbond**: W25Q16, W25Q32, W25Q256
 *   **GigaDevice**: GD25Q64C, GD25Q128C
-*   **Macronix**: MX25L6433F, MX25L12835F
-*   **Modes**: Standard SPI, Dual Output, Dual I/O, Quad Output, Quad I/O, QPI
-*   *Auto-detection via JEDEC ID (0x9F)*
+*   **Macronix**: MX25L6433F, MX25L12835F (Quad-capable)
+
+*Auto-detection via JEDEC ID (0x9F)*
 
 ### AVR Microcontrollers (ISP)
 *   **ATmega**: ATmega328P (32KB), ATmega168 (16KB)

@@ -373,6 +373,100 @@ class OPUPClient:
         
         return results
     
+    def qspi_read_status(self) -> Tuple[int, int]:
+        """Read Status Register 1 and 2"""
+        self.qspi_set_mode(0)  # Standard mode
+        # Read SR1
+        sr1_data = self.qspi_cmd(0x05, b'\x00')  # Read Status Register 1
+        sr1 = sr1_data[0] if sr1_data else 0
+        # Read SR2
+        sr2_data = self.qspi_cmd(0x35, b'\x00')  # Read Status Register 2
+        sr2 = sr2_data[0] if sr2_data else 0
+        print(f"Status Registers: SR1=0x{sr1:02X} SR2=0x{sr2:02X}")
+        print(f"  SR1 bits: BUSY={sr1&1} WEL={(sr1>>1)&1} BP0-2={(sr1>>2)&7} TB={(sr1>>5)&1} SEC={(sr1>>6)&1} SRP={(sr1>>7)&1}")
+        print(f"  SR2 bits: SRL={(sr2>>0)&1} QE={(sr2>>1)&1} LB1-3={(sr2>>2)&7} CMP={(sr2>>6)&1} SUS={(sr2>>7)&1}")
+        return sr1, sr2
+    
+    def qspi_quad_enable(self) -> bool:
+        """Enable Quad mode on the flash chip by setting QE bit"""
+        print("\n=== Enabling Quad Mode ===")
+        self.qspi_set_mode(0)  # Standard mode
+        
+        # First detect chip to use correct method
+        jedec = self.qspi_cmd(0x9F, b'\x00\x00\x00')
+        if len(jedec) < 3:
+            print("✗ Failed to read JEDEC ID")
+            return False
+        
+        mfg = jedec[0]
+        print(f"Detected Manufacturer: 0x{mfg:02X}")
+        
+        # Read current status
+        sr1_data = self.qspi_cmd(0x05, b'\x00')
+        sr2_data = self.qspi_cmd(0x35, b'\x00')
+        sr1 = sr1_data[0] if sr1_data else 0
+        sr2 = sr2_data[0] if sr2_data else 0
+        print(f"Current SR1=0x{sr1:02X} SR2=0x{sr2:02X}")
+        
+        # Check if QE is already set (bit 1 of SR2 for most chips)
+        qe_bit = (sr2 >> 1) & 1
+        if qe_bit:
+            print("✓ QE bit already set, Quad mode enabled")
+            return True
+        
+        # Different methods for different manufacturers
+        if mfg == 0xEF:  # Winbond
+            print("Using Winbond method: Write SR2 with 0x31")
+            # Write Enable
+            self.qspi_cmd(0x06, b'')
+            # Write SR2 (0x31) with QE bit set
+            self.qspi_cmd(0x31, bytes([0x02]))  # Set QE bit (bit 1)
+            
+        elif mfg == 0xC2:  # Macronix
+            print("Using Macronix method: Write SR1 with 0x01 + 0x40")
+            # For Macronix, QE is bit 6 of SR1
+            # Write Enable
+            self.qspi_cmd(0x06, b'')
+            # Write Status Register (0x01) with QE bit
+            new_sr1 = sr1 | 0x40  # Set bit 6
+            self.qspi_cmd(0x01, bytes([new_sr1]))
+            
+        elif mfg == 0xC8:  # GigaDevice  
+            print("Using GigaDevice method: Write SR2 with 0x31")
+            # Write Enable
+            self.qspi_cmd(0x06, b'')
+            # Write SR2 with QE bit
+            self.qspi_cmd(0x31, bytes([0x02]))
+            
+        else:
+            print(f"Unknown manufacturer 0x{mfg:02X}, trying Winbond method")
+            self.qspi_cmd(0x06, b'')
+            self.qspi_cmd(0x31, bytes([0x02]))
+        
+        # Wait for write to complete
+        import time
+        time.sleep(0.1)  # 100ms wait
+        
+        # Verify QE is set
+        sr1_data = self.qspi_cmd(0x05, b'\x00')
+        sr2_data = self.qspi_cmd(0x35, b'\x00')
+        sr1 = sr1_data[0] if sr1_data else 0
+        sr2 = sr2_data[0] if sr2_data else 0
+        print(f"After: SR1=0x{sr1:02X} SR2=0x{sr2:02X}")
+        
+        # Check QE based on manufacturer
+        if mfg == 0xC2:  # Macronix - QE is bit 6 of SR1
+            qe_enabled = (sr1 >> 6) & 1
+        else:  # Others - QE is bit 1 of SR2
+            qe_enabled = (sr2 >> 1) & 1
+        
+        if qe_enabled:
+            print("✓ QE bit successfully set! Quad mode enabled.")
+            return True
+        else:
+            print("✗ Failed to set QE bit")
+            return False
+    
     def isp_enter(self) -> bool:
         """Enter ISP programming mode"""
         ok, payload = self.send_command(OpupCmd.ISP_ENTER)
@@ -542,6 +636,12 @@ Examples:
         
         elif cmd == 'qspi-test':
             client.qspi_test_all_modes()
+        
+        elif cmd == 'qspi-quad-enable':
+            client.qspi_quad_enable()
+        
+        elif cmd == 'qspi-status':
+            client.qspi_read_status()
         
         else:
             print(f"Unknown command: {cmd}")
