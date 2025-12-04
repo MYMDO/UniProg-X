@@ -32,6 +32,21 @@ public:
       respLen = 5;
       return true;
     }
+    case OpupCmd::SYS_GPIO_TEST: {
+      // Read SPI GPIO states for debugging WITHOUT changing pin modes
+      // On RP2040, digitalRead works on output pins too - reads current output
+      // state Response: [CS:1][SCK:1][MOSI:1][MISO:1][IO2:1][IO3:1]
+
+      // Read current states WITHOUT changing pinMode
+      respData[0] = digitalRead(17) ? 1 : 0; // CS (GP17)
+      respData[1] = digitalRead(18) ? 1 : 0; // SCK (GP18)
+      respData[2] = digitalRead(19) ? 1 : 0; // MOSI (GP19)
+      respData[3] = digitalRead(16) ? 1 : 0; // MISO (GP16)
+      respData[4] = digitalRead(21) ? 1 : 0; // IO2 (GP21)
+      respData[5] = digitalRead(22) ? 1 : 0; // IO3 (GP22)
+      respLen = 6;
+      return true;
+    }
     case OpupCmd::BOOTLOADER: {
       // Send ACK before rebooting
       respLen = 0;

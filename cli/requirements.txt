@@ -1,0 +1,2 @@
+# UniProg-X CLI Requirements
+pyserial>=3.5

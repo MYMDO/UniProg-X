@@ -21,6 +21,7 @@ enum OpupCmd : uint8_t {
   SYS_GET_CAPS = 0x02,
   SYS_GET_STATUS = 0x03,
   SYS_RESET = 0x04,
+  SYS_GPIO_TEST = 0x05, // Debug: Read GPIO states
 
   I2C_SCAN = 0x10,
   I2C_READ = 0x11,

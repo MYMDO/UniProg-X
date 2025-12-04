@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Sequence number tracking for request/response matching
   - Modular driver architecture
   - Support for I2C, SPI, ISP, SWD protocols
+- **QSPI Support (2025-12-04)**: Full Quad SPI implementation
+  - GPIO21 = IO2 (/WP), GPIO22 = IO3 (/HOLD)
+  - All 6 modes: Standard, Dual Out/IO, Quad Out/IO, QPI
+  - New OPUP commands: 0x25-0x29 (QSPI_SET_MODE, READ, WRITE, FAST_READ, CMD)
+- **CLI Tool (2025-12-04)**: Python command-line interface (`cli/uniprog.py`)
+  - ping, status, i2c-scan, spi-scan, spi-raw, qspi-mode, gpio-test
+  - Debugging and testing without web browser
 - **Web Client**: Modern React-based interface with TypeScript
   - `OPUPClient` class for protocol handling
   - `WebSerialTransport` for Web Serial API integration
@@ -27,13 +34,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **I2C_SCAN Response Format**: Fixed to return `[count, addr1, addr2, ...]` format
 
 ### Fixed
-- **I2C_SCAN Response (2025-01-30)**: Firmware now returns count as first byte, then addresses
-  - Before: Returned only addresses with `respLen = count`
-  - After: Returns `respData[0] = count`, then addresses at `respData[1...]` with `respLen = 1 + count`
-- **Multiple OPUPClient Instances (2025-01-30)**: Web client now uses `useState` lazy initializer
-  - Prevents React from creating multiple client instances on re-renders
-  - Ensures single client instance throughout app lifecycle
-- **Response Payload Access**: Fixed all response accesses to use `response.payload[i]` instead of `response[i]`
+- **SPI Flash Detection (2025-12-04)**: Bit-bang SPI implementation for RP2040
+  - Standard Arduino SPI library had issues with RP2040
+  - Implemented software SPI (bit-bang) for maximum compatibility
+  - Tested with Winbond W25Q80 (0xEF 0x4014) - working!
+- **SPI_XFER CS Pin**: Fixed CS pin parameter (was passing 0 instead of 17)
+- **MISO Input Mode**: Added INPUT_PULLUP for proper MISO reading
+- **I2C_SCAN Response (2025-01-30)**: Firmware now returns count as first byte
+- **Multiple OPUPClient Instances (2025-01-30)**: Web client uses `useState` lazy initializer
+- **Response Payload Access**: Fixed all response accesses to use `response.payload[i]`
 
 ## [1.0.0] - 2025-01-15
 
