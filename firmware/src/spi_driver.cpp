@@ -1,39 +1,34 @@
 #include "spi_driver.h"
+#include "Board.h"
 
-// RP2040 SPI Pin Definitions
-#define SPI_PIN_MISO 16 // GP16 = MISO (RX) / IO1
-#define SPI_PIN_CS 17   // GP17 = CS (manual control)
-#define SPI_PIN_SCK 18  // GP18 = SCK
-#define SPI_PIN_MOSI 19 // GP19 = MOSI (TX) / IO0
-#define SPI_PIN_IO2 21  // GP21 = /WP (Write Protect) / IO2
-#define SPI_PIN_IO3 22  // GP22 = /HOLD (Hold) / IO3
+// RP2040 SPI Pin Definitions are now in Board.h
 
 void SPIDriver::begin() {
   // CRITICAL: Set /WP and /HOLD HIGH first!
   // /HOLD LOW = chip ignores all SPI commands
   // /WP LOW = write protect enabled (OK for reading, but set HIGH anyway)
-  pinMode(SPI_PIN_IO2, OUTPUT);
-  pinMode(SPI_PIN_IO3, OUTPUT);
-  digitalWrite(SPI_PIN_IO2, HIGH); // Disable Write Protect
-  digitalWrite(SPI_PIN_IO3, HIGH); // Disable Hold
+  pinMode(Board::PIN_QSPI_IO2, OUTPUT);
+  pinMode(Board::PIN_QSPI_IO3, OUTPUT);
+  digitalWrite(Board::PIN_QSPI_IO2, HIGH); // Disable Write Protect
+  digitalWrite(Board::PIN_QSPI_IO3, HIGH); // Disable Hold
 
   // Initialize CS pin - HIGH (deselected)
-  pinMode(SPI_PIN_CS, OUTPUT);
-  digitalWrite(SPI_PIN_CS, HIGH);
+  pinMode(Board::PIN_SPI_CS, OUTPUT);
+  digitalWrite(Board::PIN_SPI_CS, HIGH);
 
   // Configure SCK and MOSI as outputs
-  pinMode(SPI_PIN_SCK, OUTPUT);
-  pinMode(SPI_PIN_MOSI, OUTPUT);
-  digitalWrite(SPI_PIN_SCK, LOW); // CPOL = 0
-  digitalWrite(SPI_PIN_MOSI, LOW);
+  pinMode(Board::PIN_SPI_SCK, OUTPUT);
+  pinMode(Board::PIN_SPI_MOSI, OUTPUT);
+  digitalWrite(Board::PIN_SPI_SCK, LOW); // CPOL = 0
+  digitalWrite(Board::PIN_SPI_MOSI, LOW);
 
   // Configure MISO as input with pullup
-  pinMode(SPI_PIN_MISO, INPUT_PULLUP);
+  pinMode(Board::PIN_SPI_MISO, INPUT_PULLUP);
 
   // Now configure hardware SPI
-  SPI.setRX(SPI_PIN_MISO); // MISO = GP16
-  SPI.setTX(SPI_PIN_MOSI); // MOSI = GP19
-  SPI.setSCK(SPI_PIN_SCK); // SCK = GP18
+  SPI.setRX(Board::PIN_SPI_MISO); // MISO = GP16
+  SPI.setTX(Board::PIN_SPI_MOSI); // MOSI = GP19
+  SPI.setSCK(Board::PIN_SPI_SCK); // SCK = GP18
   SPI.begin();
 
   // Default settings: 1MHz, Mode 0 (CPOL=0, CPHA=0)
@@ -55,7 +50,7 @@ void SPIDriver::configure(uint32_t freq, uint8_t mode) {
 void SPIDriver::transfer(uint8_t cs_pin, uint8_t *data, uint16_t len) {
   // Ensure CS pin is configured
   if (cs_pin == 0) {
-    cs_pin = SPI_PIN_CS; // Default to GP17 if 0 is passed
+    cs_pin = Board::PIN_SPI_CS; // Default to GP17 if 0 is passed
   }
 
   SPI.beginTransaction(_settings);
@@ -80,18 +75,18 @@ uint8_t SPIDriver::bitbangTransferByte(uint8_t txByte) {
 
   for (int i = 7; i >= 0; i--) {
     // Set MOSI
-    digitalWrite(SPI_PIN_MOSI, (txByte >> i) & 1);
+    digitalWrite(Board::PIN_SPI_MOSI, (txByte >> i) & 1);
     delayMicroseconds(1);
 
     // Clock high
-    digitalWrite(SPI_PIN_SCK, HIGH);
+    digitalWrite(Board::PIN_SPI_SCK, HIGH);
     delayMicroseconds(1);
 
     // Read MISO
-    rxByte |= (digitalRead(SPI_PIN_MISO) << i);
+    rxByte |= (digitalRead(Board::PIN_SPI_MISO) << i);
 
     // Clock low
-    digitalWrite(SPI_PIN_SCK, LOW);
+    digitalWrite(Board::PIN_SPI_SCK, LOW);
     delayMicroseconds(1);
   }
 
@@ -100,16 +95,16 @@ uint8_t SPIDriver::bitbangTransferByte(uint8_t txByte) {
 
 void SPIDriver::bitbangTransfer(uint8_t cs_pin, uint8_t *data, uint16_t len) {
   if (cs_pin == 0) {
-    cs_pin = SPI_PIN_CS;
+    cs_pin = Board::PIN_SPI_CS;
   }
 
   // Set pins for bit-bang mode
-  pinMode(SPI_PIN_MOSI, OUTPUT);
-  pinMode(SPI_PIN_SCK, OUTPUT);
-  pinMode(SPI_PIN_MISO, INPUT_PULLUP);
+  pinMode(Board::PIN_SPI_MOSI, OUTPUT);
+  pinMode(Board::PIN_SPI_SCK, OUTPUT);
+  pinMode(Board::PIN_SPI_MISO, INPUT_PULLUP);
   pinMode(cs_pin, OUTPUT);
 
-  digitalWrite(SPI_PIN_SCK, LOW);
+  digitalWrite(Board::PIN_SPI_SCK, LOW);
   digitalWrite(cs_pin, LOW);
   delayMicroseconds(5);
 

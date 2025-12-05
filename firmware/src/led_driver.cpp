@@ -1,5 +1,9 @@
 #include "led_driver.h"
-#include <Arduino.h>
+#include "Board.h"
+#include "Logger.h"
+
+// Define Trace Tag
+#define TAG "LED"
 
 // Global instance is defined in main.cpp
 
@@ -11,12 +15,12 @@ LEDDriver::LEDDriver()
 
 void LEDDriver::begin() {
   // Activity LED
-  pinMode(LED_PIN_ACTIVITY, OUTPUT);
-  digitalWrite(LED_PIN_ACTIVITY, LOW);
+  pinMode(Board::PIN_LED_ACTIVITY, OUTPUT);
+  digitalWrite(Board::PIN_LED_ACTIVITY, LOW);
 
   // WS2812 data pin
-  pinMode(LED_PIN_WS2812, OUTPUT);
-  digitalWrite(LED_PIN_WS2812, LOW);
+  pinMode(Board::PIN_LED_WS2812, OUTPUT);
+  digitalWrite(Board::PIN_LED_WS2812, LOW);
 
   // Initial state: startup (cyan breathing)
   // Force clear first to prevent garbage
@@ -25,14 +29,14 @@ void LEDDriver::begin() {
 }
 
 void LEDDriver::setActivity(bool on) {
-  digitalWrite(LED_PIN_ACTIVITY, on ? HIGH : LOW);
+  digitalWrite(Board::PIN_LED_ACTIVITY, on ? HIGH : LOW);
 }
 
 void LEDDriver::activityPulse() {
   // Quick pulse for single byte transfers
-  digitalWrite(LED_PIN_ACTIVITY, HIGH);
+  digitalWrite(Board::PIN_LED_ACTIVITY, HIGH);
   delayMicroseconds(10);
-  digitalWrite(LED_PIN_ACTIVITY, LOW);
+  digitalWrite(Board::PIN_LED_ACTIVITY, LOW);
 }
 
 void LEDDriver::setStatus(LEDStatus status) {
@@ -40,8 +44,7 @@ void LEDDriver::setStatus(LEDStatus status) {
     return;
 
   // Debug Logging for Status Change
-  Serial.print("LED Status: ");
-  Serial.println((int)status);
+  LOG_VAL(TAG, "Status", (int)status);
 
   currentStatus = status;
   animationStep = 0;
@@ -182,12 +185,7 @@ void LEDDriver::sendWS2812(const RGBColor &color) {
                      (uint8_t)(color.b >> 2)};
 
   // Debug Logging for Raw Data
-  Serial.print("LED Raw: R=");
-  Serial.print(capped.r);
-  Serial.print(" G=");
-  Serial.print(capped.g);
-  Serial.print(" B=");
-  Serial.println(capped.b);
+  // LOG_HEX(TAG, "RGB", (capped.r << 16) | (capped.g << 8) | capped.b);
 
   // WS2812 expects GRB order
   noInterrupts();
@@ -207,7 +205,7 @@ void LEDDriver::sendByte(uint8_t byte) {
   for (int8_t bit = 7; bit >= 0; bit--) {
     if (byte & (1 << bit)) {
       // Send "1": ~800ns high, ~450ns low
-      gpio_put(LED_PIN_WS2812, 1);
+      gpio_put(Board::PIN_LED_WS2812, 1);
       // ~100 cycles at 125MHz = 800ns
       asm volatile(
           "nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n"
@@ -220,7 +218,7 @@ void LEDDriver::sendByte(uint8_t byte) {
           "nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n"
           "nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n"
           "nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
-      gpio_put(LED_PIN_WS2812, 0);
+      gpio_put(Board::PIN_LED_WS2812, 0);
       // ~56 cycles at 125MHz = 450ns
       asm volatile("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n"
                    "nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n"
@@ -230,7 +228,7 @@ void LEDDriver::sendByte(uint8_t byte) {
                    "nop\n nop\n nop\n nop\n nop\n nop\n");
     } else {
       // Send "0": ~400ns high, ~850ns low
-      gpio_put(LED_PIN_WS2812, 1);
+      gpio_put(Board::PIN_LED_WS2812, 1);
       // ~50 cycles at 125MHz = 400ns
       asm volatile(
           "nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n"
@@ -238,7 +236,7 @@ void LEDDriver::sendByte(uint8_t byte) {
           "nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n"
           "nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n"
           "nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
-      gpio_put(LED_PIN_WS2812, 0);
+      gpio_put(Board::PIN_LED_WS2812, 0);
       // ~106 cycles at 125MHz = 850ns
       asm volatile("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n"
                    "nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n"

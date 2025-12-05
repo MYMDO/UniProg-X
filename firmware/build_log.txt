@@ -23,14 +23,8 @@ Dependency Graph
 |-- Wire @ 1.0
 |-- SPI @ 1.0
 Building in release mode
-Compiling .pio/build/pico/src/main.cpp.o
-<command-line>: warning: "USB_MANUFACTURER" redefined
-<command-line>: note: this is the location of the previous definition
-<command-line>: warning: "USB_PRODUCT" redefined
-<command-line>: note: this is the location of the previous definition
-Generating linkerscript /home/wm/.gemini/antigravity/scratch/UniProg-X/firmware/.pio/build/pico/memmap_default.ld
-Compiling .pio/build/pico/lib591/Wire/Wire.cpp.o
-Compiling .pio/build/pico/lib2b7/SPI/SPI.cpp.o
+Compiling .pio/build/pico/src/qspi_driver.cpp.o
+Compiling .pio/build/pico/src/spi_driver.cpp.o
 <command-line>: warning: "USB_MANUFACTURER" redefined
 <command-line>: note: this is the location of the previous definition
 <command-line>: warning: "USB_PRODUCT" redefined
@@ -39,28 +33,44 @@ Compiling .pio/build/pico/lib2b7/SPI/SPI.cpp.o
 <command-line>: note: this is the location of the previous definition
 <command-line>: warning: "USB_PRODUCT" redefined
 <command-line>: note: this is the location of the previous definition
+Archiving .pio/build/pico/lib591/libWire.a
+Archiving .pio/build/pico/lib2b7/libSPI.a
+Indexing .pio/build/pico/lib591/libWire.a
+Indexing .pio/build/pico/lib2b7/libSPI.a
 Compiling .pio/build/pico/FrameworkArduino/BluetoothDebug.cpp.o
-<command-line>: warning: "USB_MANUFACTURER" redefined
-<command-line>: note: this is the location of the previous definition
-<command-line>: warning: "USB_PRODUCT" redefined
-<command-line>: note: this is the location of the previous definition
 Compiling .pio/build/pico/FrameworkArduino/Bootsel.cpp.o
 <command-line>: warning: "USB_MANUFACTURER" redefined
 <command-line>: note: this is the location of the previous definition
 <command-line>: warning: "USB_PRODUCT" redefined
 <command-line>: note: this is the location of the previous definition
-src/main.cpp:9:10: fatal error: rp2040_driver.h: No such file or directory
-
-***********************************************************************
-* Looking for rp2040_driver.h dependency? Check our library registry!
-*
-* CLI  > platformio lib search "header:rp2040_driver.h"
-* Web  > https://registry.platformio.org/search?q=header:rp2040_driver.h
-*
-***********************************************************************
-
-    9 | #include "rp2040_driver.h"
-      |          ^~~~~~~~~~~~~~~~~
-compilation terminated.
-*** [.pio/build/pico/src/main.cpp.o] Error 1
+Compiling .pio/build/pico/FrameworkArduino/CoreMutex.cpp.o
+<command-line>: warning: "USB_MANUFACTURER" redefined
+<command-line>: note: this is the location of the previous definition
+<command-line>: warning: "USB_PRODUCT" redefined
+<command-line>: note: this is the location of the previous definition
+<command-line>: warning: "USB_MANUFACTURER" redefined
+<command-line>: note: this is the location of the previous definition
+<command-line>: warning: "USB_PRODUCT" redefined
+<command-line>: note: this is the location of the previous definition
+src/qspi_driver.cpp:15:24: error: definition of implicitly-declared 'constexpr QSPIDriver::QSPIDriver()'
+   15 | QSPIDriver::QSPIDriver()
+      |                        ^
+src/qspi_driver.cpp: In member function 'void QSPIDriver::begin()':
+src/qspi_driver.cpp:24:11: error: 'csPin' was not declared in this scope; did you mean 'sin'?
+   24 |   pinMode(csPin, OUTPUT);
+      |           ^~~~~
+      |           sin
+src/qspi_driver.cpp:27:11: error: 'clkPin' was not declared in this scope
+   27 |   pinMode(clkPin, OUTPUT);
+      |           ^~~~~~
+src/qspi_driver.cpp:39:11: error: 'QSPI_MODE_STANDARD' was not declared in this scope
+   39 |   setMode(QSPI_MODE_STANDARD); // Default to Standard SPI
+      |           ^~~~~~~~~~~~~~~~~~
+*** [.pio/build/pico/src/qspi_driver.cpp.o] Error 1
+src/spi_driver.cpp: In member function 'void SPIDriver::bitbangTransfer(uint8_t, uint8_t*, uint16_t)':
+src/spi_driver.cpp:107:16: error: 'SPI_PIN_SCK' was not declared in this scope; did you mean 'PIN_SPI0_SCK'?
+  107 |   digitalWrite(SPI_PIN_SCK, LOW);
+      |                ^~~~~~~~~~~
+      |                PIN_SPI0_SCK
+*** [.pio/build/pico/src/spi_driver.cpp.o] Error 1
 ========================== [FAILED] Took 1.47 seconds ==========================

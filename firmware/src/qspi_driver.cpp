@@ -1,20 +1,40 @@
 #include "qspi_driver.h"
+#include "Board.h"
+#include "Logger.h"
+
+// Define Trace Tag
+#define TAG "QSPI"
+
+#include <Arduino.h>
+#include <hardware/gpio.h>
+#include <hardware/sync.h>
 
 // Inline delay for clock timing (can be adjusted for speed)
 #define QSPI_CLOCK_DELAY() delayMicroseconds(0)
 
+QSPIDriver::QSPIDriver()
+    : _mode(QSPIMode::STANDARD), csPin(Board::PIN_SPI_CS),
+      clkPin(Board::PIN_SPI_SCK), mosiPin(Board::PIN_SPI_MOSI),
+      misoPin(Board::PIN_SPI_MISO) {}
+
 void QSPIDriver::begin() {
-  // Configure CS as output, default HIGH
-  pinMode(QSPI_PIN_CS, OUTPUT);
-  digitalWrite(QSPI_PIN_CS, HIGH);
+  LOG_INFO(TAG, "Initializing QSPI Driver");
 
-  // Configure CLK as output, default LOW (CPOL=0)
-  pinMode(QSPI_PIN_CLK, OUTPUT);
-  digitalWrite(QSPI_PIN_CLK, LOW);
+  // Initialize standard SPI pins
+  pinMode(csPin, OUTPUT);
+  digitalWrite(csPin, HIGH);
 
-  // Default to standard SPI mode
-  setStandardMode();
-  _mode = QSPIMode::STANDARD;
+  pinMode(clkPin, OUTPUT);
+  digitalWrite(clkPin, LOW);
+
+  // Note: MOSI/MISO are handled dynamically based on mode
+
+  // Ensure WP/HOLD (IO2/IO3) are inactive by default
+  pinMode(Board::PIN_QSPI_IO2, OUTPUT);
+  digitalWrite(Board::PIN_QSPI_IO2, HIGH);
+
+  pinMode(Board::PIN_QSPI_IO3, OUTPUT);
+  digitalWrite(Board::PIN_QSPI_IO3, HIGH);
 }
 
 void QSPIDriver::setMode(QSPIMode mode) {

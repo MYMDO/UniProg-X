@@ -32,6 +32,7 @@ public:
   /**
    * @brief Initialize QSPI driver and configure GPIO pins
    */
+  QSPIDriver(); // Constructor
   void begin();
 
   /**
@@ -146,4 +147,10 @@ private:
   void setIOsInput();
   void setIO01Output();
   void setIO01Input();
+
+  // Pin definitions
+  uint8_t csPin;
+  uint8_t clkPin;
+  uint8_t mosiPin;
+  uint8_t misoPin;
 };

@@ -1,45 +1,46 @@
 #include "swd_driver.h"
+#include "Board.h"
 
 void SWDDriver::begin() {
-  pinMode(PIN_SWCLK, OUTPUT);
-  pinMode(PIN_SWDIO, OUTPUT);
-  digitalWrite(PIN_SWCLK, LOW);
+  pinMode(Board::PIN_SWD_CLK, OUTPUT);
+  pinMode(Board::PIN_SWD_DIO, OUTPUT);
+  digitalWrite(Board::PIN_SWD_CLK, LOW);
 }
 
 // Basic bit-banging implementation (simplified for prototype)
 // Real SWD requires strict timing and parity checks
 
 void SWDDriver::writeBits(uint32_t data, uint8_t bits) {
-  pinMode(PIN_SWDIO, OUTPUT);
+  pinMode(Board::PIN_SWD_DIO, OUTPUT);
   for (int i = 0; i < bits; i++) {
-    digitalWrite(PIN_SWDIO, (data >> i) & 1);
-    digitalWrite(PIN_SWCLK, LOW);
+    digitalWrite(Board::PIN_SWD_DIO, (data >> i) & 1);
+    digitalWrite(Board::PIN_SWD_CLK, LOW);
     delayMicroseconds(1);
-    digitalWrite(PIN_SWCLK, HIGH);
+    digitalWrite(Board::PIN_SWD_CLK, HIGH);
     delayMicroseconds(1);
   }
 }
 
 uint32_t SWDDriver::readBits(uint8_t bits) {
-  pinMode(PIN_SWDIO, INPUT);
+  pinMode(Board::PIN_SWD_DIO, INPUT);
   uint32_t data = 0;
   for (int i = 0; i < bits; i++) {
-    digitalWrite(PIN_SWCLK, LOW);
+    digitalWrite(Board::PIN_SWD_CLK, LOW);
     delayMicroseconds(1);
-    if (digitalRead(PIN_SWDIO)) {
+    if (digitalRead(Board::PIN_SWD_DIO)) {
       data |= (1 << i);
     }
-    digitalWrite(PIN_SWCLK, HIGH);
+    digitalWrite(Board::PIN_SWD_CLK, HIGH);
     delayMicroseconds(1);
   }
   return data;
 }
 
 void SWDDriver::turnAround() {
-  pinMode(PIN_SWDIO, INPUT);
-  digitalWrite(PIN_SWCLK, LOW);
+  pinMode(Board::PIN_SWD_DIO, INPUT);
+  digitalWrite(Board::PIN_SWD_CLK, LOW);
   delayMicroseconds(1);
-  digitalWrite(PIN_SWCLK, HIGH);
+  digitalWrite(Board::PIN_SWD_CLK, HIGH);
   delayMicroseconds(1);
 }
 

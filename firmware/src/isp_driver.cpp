@@ -1,14 +1,15 @@
 #include "isp_driver.h"
+#include "Board.h"
 
 void ISPDriver::begin() {
-  pinMode(PIN_RESET, OUTPUT);
-  digitalWrite(PIN_RESET, HIGH); // Default to high (inactive)
+  pinMode(Board::PIN_AVR_RESET, OUTPUT);
+  digitalWrite(Board::PIN_AVR_RESET, HIGH); // Default to high (inactive)
 }
 
 bool ISPDriver::enterProgrammingMode() {
   // 1. Power up sequence (assumed target is powered)
   // 2. Pull RESET low
-  digitalWrite(PIN_RESET, LOW);
+  digitalWrite(Board::PIN_AVR_RESET, LOW);
   delay(20); // Wait at least 20ms
 
   // 3. Send Programming Enable command (0xAC, 0x53, 0x00, 0x00)
@@ -26,7 +27,9 @@ bool ISPDriver::enterProgrammingMode() {
   return (response[2] == 0x53);
 }
 
-void ISPDriver::endProgrammingMode() { digitalWrite(PIN_RESET, HIGH); }
+void ISPDriver::endProgrammingMode() {
+  digitalWrite(Board::PIN_AVR_RESET, HIGH);
+}
 
 uint8_t ISPDriver::transfer(uint8_t data) {
   SPI.beginTransaction(SPISettings(ISP_CLOCK, MSBFIRST, SPI_MODE0));

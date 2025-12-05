@@ -1,6 +1,9 @@
 #include "i2c_driver.h"
+#include "Board.h"
 
 void I2CDriver::begin() {
+  Wire.setSDA(Board::PIN_I2C_SDA);
+  Wire.setSCL(Board::PIN_I2C_SCL);
   Wire.begin();
   Wire.setClock(400000); // 400kHz Fast Mode
 }
