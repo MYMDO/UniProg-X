@@ -5,12 +5,14 @@ export class WebSerialTransport implements OPUPTransport {
     private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
     private writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
     private dataCallback: ((data: Uint8Array) => void) | null = null;
+    private errorCallback: ((err: Error) => void) | null = null;
     private keepReading = false;
 
     async connect(): Promise<void> {
         try {
             this.port = await navigator.serial.requestPort();
             await this.port.open({ baudRate: 115200 });
+            // Assert DTR/RTS. Firmware expects DTR for Serial.io operation.
             await this.port.setSignals({ dataTerminalReady: true, requestToSend: true });
 
             this.keepReading = true;
@@ -51,6 +53,10 @@ export class WebSerialTransport implements OPUPTransport {
         this.dataCallback = callback;
     }
 
+    onError(callback: (err: Error) => void): void {
+        this.errorCallback = callback;
+    }
+
     isConnected(): boolean {
         return this.port !== null && this.port.readable !== null;
     }
@@ -71,8 +77,11 @@ export class WebSerialTransport implements OPUPTransport {
                     }
                 }
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Read error:', err);
+            if (this.errorCallback) {
+                this.errorCallback(err);
+            }
         } finally {
             if (this.reader) {
                 this.reader.releaseLock();

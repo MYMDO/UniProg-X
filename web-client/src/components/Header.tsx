@@ -3,36 +3,50 @@ import React from 'react';
 interface HeaderProps {
     connected: boolean;
     onConnect: () => void;
+    currentTheme: 'light' | 'dark';
+    onThemeToggle: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ connected, onConnect }) => {
+export const Header: React.FC<HeaderProps> = ({ connected, onConnect, currentTheme, onThemeToggle }) => {
     return (
-        <header className="mb-8 flex justify-between items-center border-b border-white/10 pb-6">
-            <div>
-                <h1 className="text-5xl font-black tracking-tighter bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">
-                    UniProg-X
-                </h1>
-                <p className="text-slate-400 mt-2 font-mono text-sm tracking-widest uppercase">
-                    Universal Hardware Programmer // <span className="text-cyan-400">v2.0</span>
-                </p>
-            </div>
-            <div className="flex gap-6 items-center">
-                <div className="flex items-center gap-3 bg-black/40 px-4 py-2 rounded-full border border-white/5">
-                    <div className={`h-3 w-3 rounded-full transition-all duration-500 ${connected ? 'bg-emerald-500 shadow-[0_0_15px_#10b981]' : 'bg-rose-500 shadow-[0_0_15px_#f43f5e]'} `} />
-                    <span className={`font-mono text-sm ${connected ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {connected ? 'SYSTEM ONLINE' : 'DISCONNECTED'}
+        <header className="flex justify-between items-center h-16 px-6 bg-dashboard-panel-light dark:bg-dashboard-panel-dark border-b border-dashboard-border-light dark:border-dashboard-border-dark transition-colors duration-300">
+            <div className="flex items-center gap-4">
+                <div className="flex flex-col">
+                    <h1 className="text-xl font-black tracking-tighter bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
+                        UniProg-X
+                    </h1>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono tracking-widest uppercase">
+                        v2.0 // DASHBOARD
                     </span>
                 </div>
+
+                {/* Connection Badge */}
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-mono font-bold border transition-all ${connected
+                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                    : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800'
+                    }`}>
+                    <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                    {connected ? 'ONLINE' : 'OFFLINE'}
+                </div>
+            </div>
+
+            <div className="flex items-center gap-4">
                 <button
-                    className={`px-8 py-3 rounded-none skew-x-[-10deg] font-bold tracking-wider transition-all duration-300 border ${connected
-                        ? 'bg-slate-900/50 hover:bg-slate-800 text-slate-300 border-slate-700'
-                        : 'bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 border-cyan-500/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.3)]'
-                        } `}
-                    onClick={onConnect}
+                    onClick={onThemeToggle}
+                    className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 transition-colors"
+                    title={`Switch to ${currentTheme === 'light' ? 'Dark' : 'Light'} Mode`}
                 >
-                    <span className="skew-x-[10deg] inline-block">
-                        {connected ? 'TERMINATE LINK' : 'INITIALIZE LINK'}
-                    </span>
+                    {currentTheme === 'light' ? '🌙' : '☀️'}
+                </button>
+
+                <button
+                    onClick={onConnect}
+                    className={`px-4 py-1.5 text-xs font-bold font-mono tracking-wider rounded transition-all border ${connected
+                        ? 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 hover:bg-slate-300 dark:hover:bg-slate-700'
+                        : 'bg-cyan-500 hover:bg-cyan-400 text-white border-cyan-500 shadow-lg shadow-cyan-500/20'
+                        }`}
+                >
+                    {connected ? 'DISCONNECT' : 'CONNECT SYSTEM'}
                 </button>
             </div>
         </header>

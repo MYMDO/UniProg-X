@@ -57,15 +57,14 @@ export const HexEditor: React.FC<HexEditorProps> = ({ data, startAddress = 0 }) 
     };
 
     return (
-        <div className="bg-slate-900/80 border border-white/10 rounded-none backdrop-blur-md flex flex-col h-full relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 h-full bg-green-500/50" />
-
+        <div className="bg-white dark:bg-slate-900 border border-dashboard-border-light dark:border-dashboard-border-dark rounded-lg flex flex-col h-full relative overflow-hidden shadow-sm transition-colors">
             {/* Header */}
-            <div className="flex justify-between items-center p-4 border-b border-white/5 bg-black/20">
-                <h2 className="text-lg font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
-                    <span className="text-emerald-400">03.</span> Memory Matrix
+            <div className="flex justify-between items-center p-4 border-b border-dashboard-border-light dark:border-dashboard-border-dark bg-slate-50 dark:bg-slate-800/50 rounded-t-lg">
+                <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Memory Matrix
                 </h2>
-                <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
+                <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">
                     {data.length.toLocaleString()} BYTES LOADED
                 </div>
             </div>
@@ -73,37 +72,37 @@ export const HexEditor: React.FC<HexEditorProps> = ({ data, startAddress = 0 }) 
             {/* Hex Grid */}
             <div
                 ref={containerRef}
-                className="flex-1 overflow-auto font-mono text-sm relative custom-scrollbar"
+                className="flex-1 overflow-auto font-mono text-xs md:text-sm relative custom-scrollbar bg-dashboard-light dark:bg-dashboard-dark transition-colors"
                 onScroll={handleScroll}
             >
                 <div style={{ height: totalHeight, position: 'relative' }}>
                     {/* Sticky Header Row */}
-                    <div className="sticky top-0 z-10 grid grid-cols-[auto_1fr_auto] gap-x-6 px-4 py-2 bg-slate-900/90 border-b border-white/10 text-slate-500 text-xs font-bold">
+                    <div className="sticky top-0 z-10 grid grid-cols-[auto_1fr_auto] gap-x-4 md:gap-x-6 px-4 py-2 bg-slate-100/90 dark:bg-slate-900/90 border-b border-dashboard-border-light dark:border-dashboard-border-dark text-slate-500 dark:text-slate-400 font-bold backdrop-blur-sm">
                         <div className="w-[8ch]">OFFSET</div>
-                        <div className="flex justify-between w-[calc(16*3ch)]">
+                        <div className="flex justify-between w-[calc(16*2.5ch)] md:w-[calc(16*3ch)]">
                             {Array.from({ length: 16 }).map((_, i) => (
                                 <span key={i} className="w-[2ch] text-center">{i.toString(16).toUpperCase().padStart(2, '0')}</span>
                             ))}
                         </div>
-                        <div className="w-[16ch] tracking-widest pl-4 border-l border-white/5">ASCII</div>
+                        <div className="w-[16ch] tracking-widest pl-4 border-l border-slate-200 dark:border-slate-800">ASCII</div>
                     </div>
 
                     {/* Virtualized Rows */}
                     <div style={{ position: 'absolute', top: startIndex * ROW_HEIGHT + 33, left: 0, right: 0, paddingLeft: '1rem', paddingRight: '1rem' }}>
                         {rows.map((row) => (
-                            <div key={row.offset} className="grid grid-cols-[auto_1fr_auto] gap-x-6 hover:bg-white/5 transition-colors h-[24px] items-center text-xs">
-                                <div className="text-emerald-500/70 w-[8ch]">{row.offset.toString(16).padStart(8, '0').toUpperCase()}</div>
-                                <div className="flex justify-between w-[calc(16*3ch)] text-slate-300">
+                            <div key={row.offset} className="grid grid-cols-[auto_1fr_auto] gap-x-4 md:gap-x-6 hover:bg-cyan-50 dark:hover:bg-white/5 transition-colors h-[24px] items-center">
+                                <div className="text-emerald-600 dark:text-emerald-500 font-bold w-[8ch]">{row.offset.toString(16).padStart(8, '0').toUpperCase()}</div>
+                                <div className="flex justify-between w-[calc(16*2.5ch)] md:w-[calc(16*3ch)] text-slate-600 dark:text-slate-300">
                                     {row.bytes.map((byte, i) => (
                                         <span
                                             key={i}
-                                            className={`w-[2ch] text-center ${byte === -1 ? 'opacity-0' : ''} ${byte === 0xFF ? 'text-slate-600' : ''} hover:text-white cursor-default`}
+                                            className={`w-[2ch] text-center ${byte === -1 ? 'opacity-0' : ''} ${byte === 0xFF ? 'text-slate-300 dark:text-slate-700' : ''} hover:text-cyan-600 dark:hover:text-cyan-400 hover:font-bold cursor-default`}
                                         >
                                             {byte !== -1 ? byte.toString(16).padStart(2, '0').toUpperCase() : '00'}
                                         </span>
                                     ))}
                                 </div>
-                                <div className="text-slate-500 tracking-widest w-[16ch] pl-4 border-l border-white/5 truncate">
+                                <div className="text-slate-400 dark:text-slate-500 tracking-widest w-[16ch] pl-4 border-l border-slate-200 dark:border-slate-800 truncate font-mono text-[10px] md:text-xs">
                                     {row.ascii}
                                 </div>
                             </div>

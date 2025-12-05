@@ -1,0 +1,5 @@
+src/App.tsx(3,22): error TS6133: 'OpupCmd' is declared but its value is never read.
+src/components/Header.tsx(1,17): error TS6133: 'useEffect' is declared but its value is never read.
+src/components/Header.tsx(1,28): error TS6133: 'useState' is declared but its value is never read.
+src/components/Log.tsx(7,14): error TS2451: Cannot redeclare block-scoped variable 'Log'.
+src/components/Log.tsx(68,14): error TS2451: Cannot redeclare block-scoped variable 'Log'.

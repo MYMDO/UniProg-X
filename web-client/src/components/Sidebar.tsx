@@ -3,6 +3,7 @@ import { CHIP_DB, ChipDef } from '../lib/chips';
 
 interface SidebarProps {
     mode: 'I2C' | 'SPI' | 'AVR' | 'STM32';
+    setMode: (mode: 'I2C' | 'SPI' | 'AVR' | 'STM32') => void;
     selectedChip: ChipDef;
     onSelectChip: (chip: ChipDef) => void;
     connected: boolean;
@@ -14,10 +15,13 @@ interface SidebarProps {
     onWrite: () => void;
     onVerify: () => void;
     onErase: () => void;
+    onLoad: () => void;
+    onSave: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
     mode,
+    setMode,
     selectedChip,
     onSelectChip,
     connected,
@@ -28,7 +32,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onRead,
     onWrite,
     onVerify,
-    onErase
+    onErase,
+    onLoad,
+    onSave
 }) => {
     // Filter chips based on mode
     const filteredChips = CHIP_DB.filter(c => {
@@ -40,15 +46,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
     });
 
     return (
-        <div className="lg:col-span-3 space-y-6">
-            {/* Chip Selection */}
-            <div className="bg-slate-900/80 border border-white/10 rounded-none p-6 backdrop-blur-md relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500/50" />
-                <h2 className="text-lg font-bold mb-4 text-white flex items-center gap-2 font-mono uppercase tracking-wider">
-                    <span className="text-cyan-400">01.</span> Target Device
+        <div className="w-80 h-full flex flex-col gap-4 bg-dashboard-panel-light dark:bg-dashboard-panel-dark border-r border-dashboard-border-light dark:border-dashboard-border-dark p-4 overflow-y-auto transition-colors duration-300">
+            {/* Mode Switcher (Moved from App.tsx) */}
+            <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-1 flex gap-1 border border-dashboard-border-light dark:border-dashboard-border-dark">
+                {(['I2C', 'SPI', 'AVR', 'STM32'] as const).map((m) => (
+                    <button
+                        key={m}
+                        onClick={() => setMode(m)}
+                        className={`
+                            flex-1 py-1.5 text-[10px] font-bold font-mono tracking-wider rounded transition-all
+                            ${mode === m
+                                ? 'bg-white dark:bg-slate-800 text-cyan-600 dark:text-cyan-400 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }
+                        `}
+                    >
+                        {m}
+                    </button>
+                ))}
+            </div>
+
+            {/* Target Device Card */}
+            <div className="bg-white dark:bg-slate-900 border border-dashboard-border-light dark:border-dashboard-border-dark rounded-lg p-4 shadow-sm transition-colors">
+                <h2 className="text-xs font-bold mb-3 text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                    Target
                 </h2>
                 <select
-                    className="w-full bg-black/50 border border-white/10 rounded-none p-3 text-cyan-100 focus:border-cyan-500/50 outline-none font-mono transition-colors"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-cyan-500 transition-colors cursor-pointer"
                     value={selectedChip.name}
                     onChange={(e) => {
                         const chip = CHIP_DB.find(c => c.name === e.target.value)
@@ -56,86 +81,81 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     }}
                 >
                     {filteredChips.map(c => (
-                        <option key={c.name} value={c.name} className="bg-slate-900">{c.name}</option>
+                        <option key={c.name} value={c.name}>{c.name}</option>
                     ))}
                 </select>
 
-                <div className="mt-6 space-y-3 text-xs font-mono text-slate-400">
-                    <div className="flex justify-between border-b border-white/5 pb-1">
-                        <span>TYPE</span> <span className="text-cyan-300">{selectedChip.type}</span>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-[10px] font-mono text-slate-500">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-100 dark:border-slate-800">
+                        <div className="text-slate-400 mb-1">CAPACITY</div>
+                        <div className="text-cyan-600 dark:text-cyan-400 font-bold">{selectedChip.size} B</div>
                     </div>
-                    <div className="flex justify-between border-b border-white/5 pb-1">
-                        <span>CAPACITY</span> <span className="text-cyan-300">{selectedChip.size} BYTES</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-1">
-                        <span>PAGE SIZE</span> <span className="text-cyan-300">{selectedChip.pageSize} BYTES</span>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-100 dark:border-slate-800">
+                        <div className="text-slate-400 mb-1">PAGE</div>
+                        <div className="text-cyan-600 dark:text-cyan-400 font-bold">{selectedChip.pageSize} B</div>
                     </div>
                 </div>
             </div>
 
-            {/* Operations */}
-            <div className="bg-slate-900/80 border border-white/10 rounded-none p-6 backdrop-blur-md relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-purple-500/50" />
-                <h2 className="text-lg font-bold mb-4 text-white flex items-center gap-2 font-mono uppercase tracking-wider">
-                    <span className="text-purple-400">02.</span> Operations
+            {/* Operations Card */}
+            <div className="bg-white dark:bg-slate-900 border border-dashboard-border-light dark:border-dashboard-border-dark rounded-lg p-4 shadow-sm flex-1 transition-colors">
+                <h2 className="text-xs font-bold mb-3 text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                    Actions
                 </h2>
-                <div className="grid grid-cols-2 gap-3">
+
+                <div className="space-y-2">
                     {mode === 'I2C' && (
                         <OperationButton
-                            label="SCAN I2C"
-                            color="cyan"
+                            label="Scan I2C Bus"
+                            icon="🔍"
                             onClick={onScanI2C}
                             disabled={!connected || isBusy}
+                            variant="secondary"
                         />
                     )}
-
                     {mode === 'SPI' && (
                         <OperationButton
-                            label="SCAN SPI"
-                            color="cyan"
+                            label="Scan SPI Bus"
+                            icon="🔍"
                             onClick={onScanSPI}
                             disabled={!connected || isBusy}
+                            variant="secondary"
                         />
                     )}
 
-                    <OperationButton
-                        label="READ"
-                        color="cyan"
-                        onClick={onRead}
-                        disabled={!connected || isBusy}
-                    />
-                    <OperationButton
-                        label="WRITE"
-                        color="rose"
-                        onClick={onWrite}
-                        disabled={!connected || isBusy}
-                    />
-                    <OperationButton
-                        label="VERIFY"
-                        color="emerald"
-                        onClick={onVerify}
-                        disabled={!connected || isBusy}
-                    />
+                    <div className="h-2" />
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <OperationButton label="Read" icon="📥" onClick={onRead} disabled={!connected || isBusy} variant="primary" />
+                        <OperationButton label="Write" icon="📤" onClick={onWrite} disabled={!connected || isBusy} variant="danger" />
+                    </div>
+
+                    <OperationButton label="Verify Content" icon="✓" onClick={onVerify} disabled={!connected || isBusy} variant="secondary" />
+
                     {mode !== 'STM32' && (
-                        <OperationButton
-                            label="ERASE"
-                            color="amber"
-                            onClick={onErase}
-                            disabled={!connected || isBusy}
-                        />
+                        <OperationButton label="Erase Chip" icon="🗑" onClick={onErase} disabled={!connected || isBusy} variant="warning" />
                     )}
+
+                    <div className="h-2" />
+                    <div className="border-t border-slate-200 dark:border-slate-800 my-2" />
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <OperationButton label="Load File" icon="📂" onClick={onLoad} disabled={isBusy} variant="secondary" />
+                        <OperationButton label="Save File" icon="💾" onClick={onSave} disabled={isBusy} variant="secondary" />
+                    </div>
                 </div>
 
-                {/* Progress Bar */}
+                {/* Progress Indicator */}
                 {isBusy && (
-                    <div className="mt-6">
-                        <div className="flex justify-between text-[10px] font-mono text-cyan-400 mb-2 uppercase tracking-widest">
-                            <span>Processing</span>
+                    <div className="mt-6 p-3 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                        <div className="flex justify-between text-[10px] font-mono text-cyan-600 dark:text-cyan-400 mb-2 uppercase tracking-widest font-bold">
+                            <span>Processing...</span>
                             <span>{progress}%</span>
                         </div>
-                        <div className="h-1 bg-slate-800 w-full overflow-hidden">
+                        <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-200 shadow-[0_0_10px_#06b6d4]"
+                                className="h-full bg-cyan-500 transition-all duration-200 rounded-full"
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
@@ -146,12 +166,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
 };
 
-const OperationButton = ({ label, color, onClick, disabled }: { label: string, color: string, onClick: () => void, disabled: boolean }) => {
-    const colorClasses: Record<string, string> = {
-        cyan: 'text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10 hover:shadow-[0_0_15px_rgba(6,182,212,0.2)]',
-        rose: 'text-rose-400 border-rose-500/30 hover:bg-rose-500/10 hover:shadow-[0_0_15px_rgba(244,63,94,0.2)]',
-        emerald: 'text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]',
-        amber: 'text-amber-400 border-amber-500/30 hover:bg-amber-500/10 hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]',
+interface OperationBtnProps {
+    label: string;
+    icon?: string;
+    onClick: () => void;
+    disabled: boolean;
+    variant?: 'primary' | 'secondary' | 'danger' | 'warning';
+}
+
+const OperationButton: React.FC<OperationBtnProps> = ({ label, icon, onClick, disabled, variant = 'primary' }) => {
+    const variants = {
+        primary: 'bg-cyan-500 hover:bg-cyan-600 text-white shadow-cyan-500/20',
+        secondary: 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700',
+        danger: 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20',
+        warning: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-500 hover:bg-amber-200 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800'
     };
 
     return (
@@ -159,11 +187,14 @@ const OperationButton = ({ label, color, onClick, disabled }: { label: string, c
             onClick={onClick}
             disabled={disabled}
             className={`
-                p-3 border bg-black/20 font-mono text-sm font-bold tracking-wider transition-all duration-300
-                disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:shadow-none
-                ${colorClasses[color]}
+                w-full px-4 py-2.5 rounded text-xs font-bold tracking-wide transition-all duration-200
+                flex items-center justify-center gap-2
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
+                ${variants[variant]}
+                ${variant === 'primary' || variant === 'danger' ? 'shadow-lg' : ''}
             `}
         >
+            {icon && <span className="text-base">{icon}</span>}
             {label}
         </button>
     );

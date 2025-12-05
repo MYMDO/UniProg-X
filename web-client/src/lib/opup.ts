@@ -73,6 +73,10 @@ export class OPUPClient {
         await this.transport.connect();
     }
 
+    public onError(callback: (err: Error) => void): void {
+        this.transport.onError(callback);
+    }
+
     public async disconnect(): Promise<void> {
         await this.transport.disconnect();
     }
@@ -108,7 +112,7 @@ export class OPUPClient {
             timeout = setTimeout(() => {
                 this.pendingRequests.delete(seq);
                 reject(new Error(`OPUP Timeout for CMD 0x${cmd.toString(16)} SEQ ${seq}`));
-            }, 2000);
+            }, 4000); // 4s timeout to cover LOG_WAIT
 
             // Build packet
             const packet = new Uint8Array(6 + payload.length + 4);

@@ -126,18 +126,20 @@ export const AVRFuseEditor: React.FC<AVRFuseEditorProps> = ({
         }
     };
 
-    return (
-        <div className="bg-slate-900/80 border border-white/10 rounded-none p-6 backdrop-blur-md relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/50" />
+    {/* ... logic same ... */ }
 
-            <h2 className="text-lg font-bold mb-4 text-white flex items-center gap-2 font-mono uppercase tracking-wider">
-                <span className="text-amber-400">⚡</span> Fuse Bits
+    return (
+        <div className="bg-white dark:bg-slate-900 border border-dashboard-border-light dark:border-dashboard-border-dark rounded-lg p-6 shadow-sm transition-colors relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
+
+            <h2 className="text-sm font-bold mb-4 text-slate-600 dark:text-slate-300 flex items-center gap-2 font-mono uppercase tracking-wider">
+                <span className="text-amber-500">⚡</span> Fuse Bits
             </h2>
 
             {/* Current Fuse Values */}
             <div className="space-y-2 mb-4 font-mono text-sm">
-                <div className="flex justify-between items-center bg-black/30 p-2 border border-white/5">
-                    <span className="text-slate-400">Low Fuse:</span>
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800 rounded">
+                    <span className="text-slate-500 dark:text-slate-400">Low Fuse:</span>
                     {editMode ? (
                         <input
                             type="text"
@@ -148,15 +150,15 @@ export const AVRFuseEditor: React.FC<AVRFuseEditorProps> = ({
                                     setFuses({ ...fuses, low: val });
                                 }
                             }}
-                            className="bg-black/50 border border-white/20 text-cyan-400 px-2 py-1 w-20 text-center"
+                            className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-cyan-600 dark:text-cyan-400 px-2 py-1 w-20 text-center rounded outline-none focus:border-cyan-500"
                         />
                     ) : (
-                        <span className="text-cyan-400">0x{fuses.low.toString(16).padStart(2, '0').toUpperCase()}</span>
+                        <span className="text-cyan-600 dark:text-cyan-400 font-bold">0x{fuses.low.toString(16).padStart(2, '0').toUpperCase()}</span>
                     )}
                 </div>
 
-                <div className="flex justify-between items-center bg-black/30 p-2 border border-white/5">
-                    <span className="text-slate-400">High Fuse:</span>
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800 rounded">
+                    <span className="text-slate-500 dark:text-slate-400">High Fuse:</span>
                     {editMode ? (
                         <input
                             type="text"
@@ -167,15 +169,15 @@ export const AVRFuseEditor: React.FC<AVRFuseEditorProps> = ({
                                     setFuses({ ...fuses, high: val });
                                 }
                             }}
-                            className="bg-black/50 border border-white/20 text-cyan-400 px-2 py-1 w-20 text-center"
+                            className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-cyan-600 dark:text-cyan-400 px-2 py-1 w-20 text-center rounded outline-none focus:border-cyan-500"
                         />
                     ) : (
-                        <span className="text-cyan-400">0x{fuses.high.toString(16).padStart(2, '0').toUpperCase()}</span>
+                        <span className="text-cyan-600 dark:text-cyan-400 font-bold">0x{fuses.high.toString(16).padStart(2, '0').toUpperCase()}</span>
                     )}
                 </div>
 
-                <div className="flex justify-between items-center bg-black/30 p-2 border border-white/5">
-                    <span className="text-slate-400">Extended:</span>
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800 rounded">
+                    <span className="text-slate-500 dark:text-slate-400">Extended:</span>
                     {editMode ? (
                         <input
                             type="text"
@@ -186,20 +188,20 @@ export const AVRFuseEditor: React.FC<AVRFuseEditorProps> = ({
                                     setFuses({ ...fuses, extended: val });
                                 }
                             }}
-                            className="bg-black/50 border border-white/20 text-cyan-400 px-2 py-1 w-20 text-center"
+                            className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-cyan-600 dark:text-cyan-400 px-2 py-1 w-20 text-center rounded outline-none focus:border-cyan-500"
                         />
                     ) : (
-                        <span className="text-cyan-400">0x{fuses.extended.toString(16).padStart(2, '0').toUpperCase()}</span>
+                        <span className="text-cyan-600 dark:text-cyan-400 font-bold">0x{fuses.extended.toString(16).padStart(2, '0').toUpperCase()}</span>
                     )}
                 </div>
             </div>
 
             {/* Presets */}
             <div className="mb-4">
-                <label className="block text-xs text-slate-400 mb-2 font-mono uppercase tracking-wider">Presets</label>
+                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2 font-mono uppercase tracking-wider">Presets</label>
                 <select
                     onChange={(e) => applyPreset(e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 text-cyan-100 p-2 font-mono text-sm"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 p-2 font-mono text-xs rounded outline-none focus:border-amber-500"
                     disabled={!editMode}
                 >
                     <option value="">Select preset...</option>
@@ -214,7 +216,7 @@ export const AVRFuseEditor: React.FC<AVRFuseEditorProps> = ({
                 <button
                     onClick={handleReadFuses}
                     disabled={!connected || isBusy}
-                    className="p-2 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-400 border border-cyan-500/30 font-mono text-sm font-bold tracking-wider transition-all disabled:opacity-30"
+                    className="p-2 bg-cyan-100 dark:bg-cyan-900/20 hover:bg-cyan-200 dark:hover:bg-cyan-900/40 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800 font-mono text-xs font-bold tracking-wider transition-all disabled:opacity-50 rounded shadow-sm"
                 >
                     READ
                 </button>
@@ -224,13 +226,13 @@ export const AVRFuseEditor: React.FC<AVRFuseEditorProps> = ({
                         <button
                             onClick={handleWriteFuses}
                             disabled={!connected || isBusy}
-                            className="p-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 font-mono text-sm font-bold tracking-wider transition-all disabled:opacity-30"
+                            className="p-2 bg-rose-100 dark:bg-rose-900/20 hover:bg-rose-200 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 font-mono text-xs font-bold tracking-wider transition-all disabled:opacity-50 rounded shadow-sm"
                         >
                             WRITE
                         </button>
                         <button
                             onClick={() => setEditMode(false)}
-                            className="col-span-2 p-2 bg-slate-700/20 hover:bg-slate-700/30 text-slate-400 border border-slate-500/30 font-mono text-xs tracking-wider transition-all"
+                            className="col-span-2 p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 font-mono text-xs tracking-wider transition-all rounded"
                         >
                             CANCEL
                         </button>
@@ -239,7 +241,7 @@ export const AVRFuseEditor: React.FC<AVRFuseEditorProps> = ({
                     <button
                         onClick={() => setEditMode(true)}
                         disabled={!connected}
-                        className="p-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 font-mono text-sm font-bold tracking-wider transition-all disabled:opacity-30"
+                        className="p-2 bg-amber-100 dark:bg-amber-900/20 hover:bg-amber-200 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 font-mono text-xs font-bold tracking-wider transition-all disabled:opacity-50 rounded shadow-sm"
                     >
                         EDIT
                     </button>
@@ -247,7 +249,7 @@ export const AVRFuseEditor: React.FC<AVRFuseEditorProps> = ({
             </div>
 
             {/* Warning */}
-            <div className="mt-4 p-3 bg-rose-900/20 border border-rose-500/30 text-rose-300 text-xs font-mono">
+            <div className="mt-4 p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-[10px] font-mono rounded">
                 ⚠️ <span className="font-bold">WARNING:</span> Incorrect fuse settings can brick your AVR. Always verify values before writing!
             </div>
         </div>

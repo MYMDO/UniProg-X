@@ -126,20 +126,21 @@ For testing and debugging without a browser:
 cd cli/
 pip install -r requirements.txt
 python uniprog.py -p /dev/ttyACM0 ping
+python uniprog.py -p /dev/ttyACM0 spi-scan
 ```
 
 ## 🔌 QSPI/QPI Modes
 
 UniProg-X supports all standard Serial Flash memory modes:
 
-| Mode | Name | CMD | ADDR | DATA | Description |
-|------|------|-----|------|------|-------------|
-| 0 | Standard | 1 | 1 | 1 | Classic SPI (default) |
-| 1 | Dual Output | 1 | 1 | 2 | Data on IO0+IO1 |
-| 2 | Dual I/O | 1 | 2 | 2 | Addr+Data on IO0+IO1 |
-| 3 | Quad Output | 1 | 1 | 4 | Data on IO0-IO3 |
-| 4 | Quad I/O | 1 | 4 | 4 | Addr+Data on IO0-IO3 |
-| 5 | QPI | 4 | 4 | 4 | Everything on 4 wires |
+| Mode | Name        | CMD | ADDR | DATA | Description           |
+|------|-------------|-----|------|------|-----------------------|
+|   0  | Standard    |  1  |   1  |   1  | Classic SPI (default) |
+|   1  | Dual Output |  1  |   1  |   2  | Data on IO0+IO1       |
+|   2  | Dual I/O    |  1  |   2  |   2  | Addr+Data on IO0+IO1  |
+|   3  | Quad Output |  1  |   1  |   4  | Data on IO0-IO3       |
+|   4  | Quad I/O    |  1  |   4  |   4  | Addr+Data on IO0-IO3  |
+|   5  | QPI         |  4  |   4  |   4  | Everything on 4 wires |
 
 ### CLI QSPI Commands
 ```bash

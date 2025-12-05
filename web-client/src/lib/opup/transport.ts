@@ -22,5 +22,13 @@ export interface OPUPTransport {
     /**
      * Check if connected
      */
+    /**
+     * Check if connected
+     */
     isConnected(): boolean;
+
+    /**
+     * Register a callback for transport errors
+     */
+    onError(callback: (err: Error) => void): void;
 }
