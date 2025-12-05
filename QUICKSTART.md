@@ -95,13 +95,15 @@ Open http://localhost:5173 in Chrome/Edge/Opera.
 | GND       | GND  | 3,8 | Common ground            |
 
 ### LED Status Indicators
-| LED | Color | Meaning |
-|-----|-------|---------|
-| GP25 (Activity) | ON | Data transfer in progress |
-| WS2812 (Cyan) | Breathing | Idle, ready for commands |
-| WS2812 (Yellow) | Solid | Processing command |
-| WS2812 (Green) | 2× Flash | Command succeeded |
-| WS2812 (Red) | 3× Flash | Command failed |
+| LED | Color/Pattern | Meaning |
+|:---:|:---:|:---|
+| **GP25** | ON | Data transfer in progress |
+| **GP23** | Cyan (Breathing) | Startup / Idle |
+| **GP23** | Yellow (Solid) | Busy (Processing command) |
+| **GP23** | Green (Breathing) | Success (Operation complete) |
+| **GP23** | Red (Breathing) | Error (Check connection) |
+| **GP23** | Blue (Solid) | USB Connected |
+| **GP23** | OFF | Hardware fault / Disconnected |
 
 ### QSPI Flash Wiring (8-pin SOIC)
 ```

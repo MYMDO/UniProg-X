@@ -5,19 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.9.5] - 2025-12-05
+### Added
+- **Professional LED Status System (GP23 WS2812):**
+  - Implemented hardware-level brightness clamping (1% min - 25% max) for eye comfort.
+  - Designed smooth "breathing" animations for `SUCCESS` (Green) and `ERROR` (Red) states.
+  - Added visible `STARTUP` state (Cyan breathing) and `BUSY` indication (Yellow).
+  - Eliminated strobing artifacts during high-speed packet transfers.
+  - Added automatic LED output clearing on driver initialization to prevent startup glitches.
+- **Autonomous Build System:**
+  - Created `firmware/build.sh` to automate PlatformIO compilation with robust environment detection.
+  - Added GitHub Actions/Agent workflow compatibility.
+
+### Fixed
+- **QSPI Driver Stability:**
+  - Resolved `Write Enable Latch (WEL)` failure during page programming by auditing pin direction management (`pinMode`).
+  - Verified reliability of all 6 QSPI modes (1-1-1, 1-1-2, 1-2-2, 1-1-4, 1-4-4).
+- **Codebase Hygiene:**
+  - Centralized pin definitions and removed legacy heartbeat logic from `main.cpp`.
+  - Cleaned up `led_driver.cpp` logic for reliable state transitions.
+
 ## [Unreleased]
 
 ### Added
-- **LED Status Indicators (2025-12-05)**: Professional status LED system
-  - Activity LED (GP25): Lights during data transfer, off when idle
-  - WS2812 RGB (GP23): Color-coded status with animations
-    - Cyan (breathing): Idle/waiting
-    - Yellow (solid): Processing command
-    - Green (2x flash): Command success
-    - Red (3x flash): Command error
-    - Blue (solid): USB connected
-  - Removed old heartbeat blink for cleaner status indication
-- **OPUP Protocol v1.0**: Complete implementation of OpenProg Universal Protocol
   - CRC32 checksums for data integrity
   - Sequence number tracking for request/response matching
   - Modular driver architecture

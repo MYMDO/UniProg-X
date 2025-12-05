@@ -15,9 +15,15 @@ UniProg-X is a professional-grade, hyper-scalable, and automated hardware progra
 *   **Modern UI**: Cyberpunk-themed, responsive interface with glassmorphism and real-time feedback.
 *   **Mode-Aware Interface**: Separate tabs for I2C, SPI, AVR, and STM32 with context-specific controls.
 *   **Virtualized Hex Editor**: Smoothly handle large binary files with efficient virtualization.
-*   **LED Status Indicators**:
-    - **Activity LED (GP25)**: Lights during data transfer
-    - **WS2812 RGB (GP23)**: Color-coded status (Cyan=Idle, Yellow=Busy, Green=Success, Red=Error)
+*   **Professional LED Status Indicators**:
+    - **Activity LED (GP25)**: Indicates active data transfer.
+    - **Status LED (GP23/WS2812)**:
+        - **Startup**: Cyan Breathing (Soft fade-in).
+        - **Idle**: Breathing current status color.
+        - **Busy**: Yellow (25% Brightness Cap).
+        - **Success**: Green Breathing (Glitch-free).
+        - **Error**: Red Breathing.
+        - **Connection**: Blue Solid.
 *   **Advanced Features**:
     - **AVR Fuse Editor**: Read/write fuse bits with safety confirmations and presets
     - **STM32 Option Bytes**: View read protection, user flags, and write protection status
@@ -91,10 +97,11 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
 ### Firmware (RP2040)
 1.  Install **PlatformIO** (VS Code extension or CLI).
 2.  Navigate to the `firmware/` directory.
-3.  Build and upload:
+3.  Build using the autonomous script:
     ```bash
-    pio run -t upload
+    ./build.sh
     ```
+    *(Alternatively: `pio run -t upload`)*
 
 ### Web Client
 1.  Install **Node.js** (v16+).
@@ -208,7 +215,7 @@ web-client/src/
 ├── lib/
 │   ├── opup/
 │   │   ├── opup.ts         # OPUP client implementation
-│   │   └── web-transport.ts # Web Serial transport layer
+│   │   └── web-transport.ts # Web Transport layer
 │   └── chips.ts            # Chip database
 ├── components/
 │   ├── HexEditor.tsx       # Virtualized hex editor
@@ -227,9 +234,7 @@ Contributions are welcome! Please:
 
 ## 🐛 Known Issues
 
-- SPI scan implementation is incomplete (returns placeholder data)
-- Multiple OPUPClient instances may be created in React Strict Mode (fixed in latest version)
-- I2C scan fixed to return proper OPUP response format
+- SPI scan implementation is primarily for identification; full parameter detection is ongoing.
 
 ## 📄 License
 
