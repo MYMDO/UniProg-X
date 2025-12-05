@@ -103,6 +103,7 @@ uint8_t QSPIDriver::readBitStandard() {
 }
 
 void QSPIDriver::writeByteStandard(uint8_t byte) {
+  pinMode(QSPI_PIN_IO0, OUTPUT);
   for (int i = 7; i >= 0; i--) {
     writeBitStandard((byte >> i) & 1);
   }
