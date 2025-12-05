@@ -15,6 +15,9 @@ UniProg-X is a professional-grade, hyper-scalable, and automated hardware progra
 *   **Modern UI**: Cyberpunk-themed, responsive interface with glassmorphism and real-time feedback.
 *   **Mode-Aware Interface**: Separate tabs for I2C, SPI, AVR, and STM32 with context-specific controls.
 *   **Virtualized Hex Editor**: Smoothly handle large binary files with efficient virtualization.
+*   **LED Status Indicators**:
+    - **Activity LED (GP25)**: Lights during data transfer
+    - **WS2812 RGB (GP23)**: Color-coded status (Cyan=Idle, Yellow=Busy, Green=Success, Red=Error)
 *   **Advanced Features**:
     - **AVR Fuse Editor**: Read/write fuse bits with safety confirmations and presets
     - **STM32 Option Bytes**: View read protection, user flags, and write protection status
@@ -39,6 +42,8 @@ UniProg-X runs on a standard **Raspberry Pi Pico** (RP2040).
 | **AVR RESET** | GPIO 20 | Pin 26 | AVR Reset (ISP) |
 | **SWD SWCLK** | GPIO 2 | Pin 4 | SWD Clock (STM32) |
 | **SWD SWDIO** | GPIO 3 | Pin 5 | SWD Data (STM32) |
+| **LED Activity** | GPIO 25 | - | Onboard LED (data transfer) |
+| **WS2812 RGB** | GPIO 23 | - | Status indicator LED |
 | **GND** | GND | Pin 3, 8, etc. | Ground |
 | **3V3** | 3V3(OUT) | Pin 36 | 3.3V Power Supply |
 
@@ -191,6 +196,8 @@ firmware/src/
 │       └── OPUP_System.h   # System commands
 ├── i2c_driver.cpp          # I2C hardware abstraction
 ├── spi_driver.cpp          # SPI hardware abstraction
+├── qspi_driver.cpp         # QSPI bit-bang driver (6 modes)
+├── led_driver.cpp          # LED/WS2812 status driver
 ├── isp_driver.cpp          # AVR ISP implementation
 └── swd_driver.cpp          # STM32 SWD implementation
 ```

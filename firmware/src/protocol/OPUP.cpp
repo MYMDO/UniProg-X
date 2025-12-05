@@ -1,7 +1,9 @@
 #include "OPUP.h"
+#include "../led_driver.h"
 #include <cstring>
 
 // Serial is a global from Arduino framework
+// LED driver extern is in led_driver.h
 
 OPUP::OPUP() {
   state = WAIT_SOF;
@@ -82,6 +84,10 @@ void OPUP::update() {
 }
 
 void OPUP::processPacket() {
+  // Activity LED on during command processing
+  led.setActivity(true);
+  led.setStatus(STATUS_BUSY);
+
   // Find driver for this command
   OPUPDriver *driver = registry.getDriver(currentCmd);
 
@@ -94,14 +100,20 @@ void OPUP::processPacket() {
     if (driver->handleCommand(currentCmd, payload, payloadLen, respBuffer,
                               respLen)) {
       sendResponse(currentCmd, currentSeq, respBuffer, respLen);
+      led.setStatus(STATUS_SUCCESS);
     } else {
       // Driver returned false -> Generic Error or specific error handled
       // inside? For now assume generic error if not handled
       sendError(currentSeq, 0x02, "Cmd Failed");
+      led.setStatus(STATUS_ERROR);
     }
   } else {
     sendError(currentSeq, 0x01, "Unknown CMD");
+    led.setStatus(STATUS_ERROR);
   }
+
+  // Activity LED off after processing
+  led.setActivity(false);
 }
 
 void OPUP::sendResponse(uint8_t cmd, uint8_t seq, uint8_t *data, uint16_t len,

@@ -1,5 +1,6 @@
 #include "i2c_driver.h"
 #include "isp_driver.h"
+#include "led_driver.h"
 #include "protocol/OPUP.h"
 #include "protocol/drivers/OPUP_I2C.h"
 #include "protocol/drivers/OPUP_ISP.h"
@@ -18,6 +19,7 @@ SPIDriver spi;
 QSPIDriver qspi;
 ISPDriver isp;
 SWDDriver swd;
+LEDDriver led;
 OPUP opup;
 
 // Driver Instances
@@ -32,6 +34,9 @@ void setup() {
   Serial.begin(115200);
   while (!Serial && millis() < 2000)
     ; // Wait for USB CDC (max 2s)
+
+  // Initialize LED driver first for visual feedback
+  led.begin();
 
   // Initialize Drivers
   i2c.begin();
@@ -50,16 +55,11 @@ void setup() {
 
   opup.begin();
 
-  pinMode(LED_BUILTIN, OUTPUT);
+  // Status: Ready (idle breathing)
+  led.setStatus(STATUS_IDLE);
 }
 
 void loop() {
   opup.update();
-
-  // Heartbeat (slow blink = running)
-  static uint32_t lastBlink = 0;
-  if (millis() - lastBlink > 500) {
-    lastBlink = millis();
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-  }
+  led.update();
 }

@@ -89,8 +89,19 @@ Open http://localhost:5173 in Chrome/Edge/Opera.
 | AVR RESET | GP20 | 26  | For ISP programming      |
 | SWD SWCLK | GP2  | 4   | For STM32 SWD            |
 | SWD SWDIO | GP3  | 5   | For STM32 SWD            |
+| LED       | GP25 | -   | Activity indicator       |
+| WS2812    | GP23 | -   | RGB status LED           |
 | 3.3V OUT  | 3V3  | 36  | Max 300mA                |
 | GND       | GND  | 3,8 | Common ground            |
+
+### LED Status Indicators
+| LED | Color | Meaning |
+|-----|-------|---------|
+| GP25 (Activity) | ON | Data transfer in progress |
+| WS2812 (Cyan) | Breathing | Idle, ready for commands |
+| WS2812 (Yellow) | Solid | Processing command |
+| WS2812 (Green) | 2× Flash | Command succeeded |
+| WS2812 (Red) | 3× Flash | Command failed |
 
 ### QSPI Flash Wiring (8-pin SOIC)
 ```

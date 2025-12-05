@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **LED Status Indicators (2025-12-05)**: Professional status LED system
+  - Activity LED (GP25): Lights during data transfer, off when idle
+  - WS2812 RGB (GP23): Color-coded status with animations
+    - Cyan (breathing): Idle/waiting
+    - Yellow (solid): Processing command
+    - Green (2x flash): Command success
+    - Red (3x flash): Command error
+    - Blue (solid): USB connected
+  - Removed old heartbeat blink for cleaner status indication
 - **OPUP Protocol v1.0**: Complete implementation of OpenProg Universal Protocol
   - CRC32 checksums for data integrity
   - Sequence number tracking for request/response matching
@@ -17,10 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GPIO21 = IO2 (/WP), GPIO22 = IO3 (/HOLD)
   - Modes: Standard (1-1-1), Dual Out (1-1-2), Dual I/O (1-2-2), Quad Out (1-1-4), Quad I/O (1-4-4), QPI (4-4-4)
   - OPUP commands: 0x25-0x29 (QSPI_SET_MODE, READ, WRITE, FAST_READ, CMD)
-  - Bit-bang implementation for maximum hardware compatibility
+  - Fixed write/read interference bug (IO0 direction issue)
 - **CLI Tool (2025-12-04)**: Python command-line interface (`cli/uniprog.py`)
   - Commands: ping, status, gpio-test, i2c-scan, spi-scan, spi-raw
   - QSPI commands: qspi-mode, qspi-read, qspi-fast-read, qspi-cmd, qspi-test
+  - Flash commands: flash-read, flash-write, flash-benchmark
   - Status commands: qspi-status, qspi-quad-enable
   - Manufacturer-aware Quad Enable (Winbond, Macronix, GigaDevice)
 - **Web Client**: Modern React-based interface with TypeScript
