@@ -10,10 +10,11 @@
 
 // Status LED states
 enum LEDStatus : uint8_t {
-  STATUS_IDLE = 0,    // Cyan breathing - waiting for commands
+  STATUS_STARTUP = 0, // Cyan breathing - first startup only
+  STATUS_IDLE,        // Breathing in last result color
   STATUS_BUSY,        // Yellow solid - processing command
-  STATUS_SUCCESS,     // Green flash - command succeeded
-  STATUS_ERROR,       // Red flash - command failed
+  STATUS_SUCCESS,     // Green flash then breathing
+  STATUS_ERROR,       // Red flash then breathing
   STATUS_CONNECTED,   // Blue solid - USB connected
   STATUS_DISCONNECTED // Off - USB disconnected
 };
@@ -60,12 +61,14 @@ public:
 private:
   LEDStatus currentStatus;
   RGBColor targetColor;
+  RGBColor breathingColor; // Color to breathe after flashes
   RGBColor currentColor;
 
   uint32_t lastUpdate;
   uint32_t animationStep;
   uint8_t flashCount;
   bool flashState;
+  bool isFirstStartup; // Track if first startup (cyan breathing)
 
   // WS2812 bit-banging
   void sendWS2812(const RGBColor &color);

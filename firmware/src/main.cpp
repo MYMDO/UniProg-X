@@ -54,9 +54,7 @@ void setup() {
   opup.registerDriver(0x40, 0x4F, &opup_swd);
 
   opup.begin();
-
-  // Status: Ready (idle breathing)
-  led.setStatus(STATUS_IDLE);
+  // LED starts in STARTUP state (cyan breathing) set by led.begin()
 }
 
 void loop() {

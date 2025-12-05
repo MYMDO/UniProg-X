@@ -86,7 +86,8 @@ void OPUP::update() {
 void OPUP::processPacket() {
   // Activity LED on during command processing
   led.setActivity(true);
-  led.setStatus(STATUS_BUSY);
+  // Disabled per-packet BUSY status to prevent strobing/flashing
+  // led.setStatus(STATUS_BUSY);
 
   // Find driver for this command
   OPUPDriver *driver = registry.getDriver(currentCmd);
